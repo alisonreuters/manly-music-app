@@ -101,6 +101,21 @@ input,textarea,select { font-family:'DM Sans',sans-serif; }
 .field textarea { min-height:80px; resize:vertical; }
 .field select option { background:var(--bg2); }
 
+/* Make date/time pickers more visible */
+input[type="date"], input[type="time"] {
+  position: relative;
+  color: var(--text);
+  cursor: pointer;
+}
+input[type="date"]::-webkit-calendar-picker-indicator,
+input[type="time"]::-webkit-calendar-picker-indicator {
+  cursor: pointer;
+  opacity: 1;
+  filter: invert(0.8);
+  font-size: 1.2rem;
+  padding: 0.2rem;
+}
+
 /* ══════════════════════════════════
    STATS GRID
 ══════════════════════════════════ */
@@ -778,6 +793,13 @@ function ScheduleModal({ onClose, onSave, currentUserId, userRole }) {
   }
 
   function handleSave() {
+    // Validate date is not in the past
+    const today = new Date().toISOString().split('T')[0];
+    if (form.date < today) {
+      alert('Cannot book sessions in the past. Please select today or a future date.');
+      return;
+    }
+    
     const endTime = calcEnd(form.startTime, form.durationMin);
     onSave({
       id: 's'+Date.now(),
@@ -823,11 +845,26 @@ function ScheduleModal({ onClose, onSave, currentUserId, userRole }) {
           <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:'1rem'}}>
             <div className="field">
               <label>Date</label>
-              <input type="date" value={form.date} onChange={e=>f('date',e.target.value)}/>
+              <select value={form.date} onChange={e=>f('date',e.target.value)}>
+                {Array.from({length: 60}, (_, i) => {
+                  const d = new Date();
+                  d.setDate(d.getDate() + i);
+                  const dateStr = d.toISOString().split('T')[0];
+                  const display = d.toLocaleDateString('en-AU', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' });
+                  return <option key={dateStr} value={dateStr}>{display}</option>;
+                })}
+              </select>
             </div>
             <div className="field">
               <label>Start Time</label>
-              <input type="time" value={form.startTime} onChange={e=>f('startTime',e.target.value)}/>
+              <select value={form.startTime} onChange={e=>f('startTime',e.target.value)}>
+                {['08:00','08:30','09:00','09:30','10:00','10:30','11:00','11:30','12:00','12:30','13:00','13:30','14:00','14:30','15:00','15:30','16:00','16:30','17:00','17:30','18:00','18:30','19:00','19:30','20:00'].map(t => (
+                  <option key={t} value={t}>{t.replace(/^(\d+):(\d+)$/, (m,h,min) => {
+                    const hr = parseInt(h);
+                    return `${hr > 12 ? hr-12 : hr === 0 ? 12 : hr}:${min}${hr >= 12 ? 'pm' : 'am'}`;
+                  })}</option>
+                ))}
+              </select>
             </div>
           </div>
           <div className="field">
@@ -1776,9 +1813,17 @@ function App() {
           
           if (smsResult.success) {
             console.log('✓ SMS confirmation sent');
+            alert(`✓ Session booked! SMS confirmation sent to ${student.name}${student.mobile ? ' ('+student.mobile+')' : ''}`);
           } else {
             console.log('SMS not sent:', smsResult.reason || smsResult.error);
+            if (smsResult.reason === 'no_phone') {
+              alert('✓ Session booked! (No mobile number available for SMS)');
+            } else {
+              alert('✓ Session booked! (SMS failed to send - check logs)');
+            }
           }
+        } else {
+          alert('✓ Session booked!');
         }
       }
     } catch (error) {
