@@ -1663,13 +1663,92 @@ function App() {
     }
   }
   
+  async function sendSessionSMS(session, student, tutor, messageType = 'confirmation') {
+    try {
+      // Determine recipient phone - check if student has mobile, otherwise use parent
+      let recipientPhone = student.mobile;
+      let recipientName = student.name;
+      
+      // If student doesn't have mobile or is under 18, send to parent
+      if (!recipientPhone) {
+        const { data: parentData } = await supabase
+          .from('parent_children')
+          .select('parent_id')
+          .eq('child_id', student.id)
+          .single();
+        
+        if (parentData) {
+          const { data: parent } = await supabase
+            .from('users')
+            .select('mobile, name')
+            .eq('id', parentData.parent_id)
+            .single();
+          
+          if (parent && parent.mobile) {
+            recipientPhone = parent.mobile;
+            recipientName = parent.name;
+          }
+        }
+      }
+      
+      if (!recipientPhone) {
+        console.log('No phone number available for SMS');
+        return { success: false, reason: 'no_phone' };
+      }
+      
+      // Call Netlify function to send SMS
+      const response = await fetch('/.netlify/functions/send-sms', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          studentName: student.name,
+          tutorName: tutor.name,
+          instrument: session.instrument,
+          date: session.date,
+          startTime: session.startTime,
+          durationMin: session.durationMin,
+          recipientPhone: recipientPhone,
+          messageType: messageType
+        })
+      });
+      
+      const result = await response.json();
+      
+      if (result.success) {
+        // Log SMS in database
+        await supabase.from('sms_log').insert([{
+          session_id: session.id,
+          recipient_phone: recipientPhone,
+          recipient_name: recipientName,
+          message_type: messageType,
+          message_body: result.message,
+          twilio_sid: result.messageSid,
+          status: 'sent'
+        }]);
+        
+        // Update session SMS tracking
+        if (messageType === 'confirmation') {
+          await supabase.from('sessions').update({
+            sms_confirmation_sent: true,
+            sms_confirmation_sent_at: new Date().toISOString()
+          }).eq('id', session.id);
+        }
+      }
+      
+      return result;
+    } catch (error) {
+      console.error('Error sending SMS:', error);
+      return { success: false, error: error.message };
+    }
+  }
+  
   async function addSession(s) {
     const newId = Date.now();
     const newSession = { ...s, id: newId };
     setSessions(prev => [...prev, newSession]);
     
     try {
-      await supabase.from('sessions').insert([{
+      const { data, error } = await supabase.from('sessions').insert([{
         student_id: s.studentId,
         tutor_id: s.tutorId,
         date: s.date,
@@ -1680,7 +1759,28 @@ function App() {
         accompaniment: s.accompaniment || '',
         status: s.status || 'scheduled',
         planned_summary: s.plannedSummary || ''
-      }]);
+      }]).select();
+      
+      if (!error && data && data[0]) {
+        // Session created successfully - send SMS confirmation
+        const student = USERS.find(u => u.id === s.studentId);
+        const tutor = USERS.find(u => u.id === s.tutorId);
+        
+        if (student && tutor) {
+          const smsResult = await sendSessionSMS(
+            { ...newSession, id: data[0].id }, 
+            student, 
+            tutor, 
+            'confirmation'
+          );
+          
+          if (smsResult.success) {
+            console.log('✓ SMS confirmation sent');
+          } else {
+            console.log('SMS not sent:', smsResult.reason || smsResult.error);
+          }
+        }
+      }
     } catch (error) {
       console.error('Error adding session:', error);
     }
