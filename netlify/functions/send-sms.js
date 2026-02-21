@@ -1,4 +1,3 @@
-
 // Netlify serverless function to send SMS via Twilio
 const twilio = require('twilio');
 
@@ -53,9 +52,9 @@ exports.handler = async (event, context) => {
     // Build message based on type
     let messageBody;
     if (messageType === 'reminder') {
-      messageBody = `Reminder: ${studentName}'s ${instrument} lesson with ${tutorName} starts in 2 hours (${formattedTime} today). See you soon! - Manly Music`;
+      messageBody = `Reminder: ${studentName}'s ${instrument} lesson with ${tutorName} starts in 2 hours (${formattedTime} today). Questions? Call 0421 272 477.`;
     } else {
-      messageBody = `Manly Music: ${studentName}'s ${instrument} lesson with ${tutorName} is confirmed for ${formattedDate} at ${formattedTime} (${durationMin} min). Reply CANCEL to reschedule.`;
+      messageBody = `Manly Music: ${studentName}'s ${instrument} lesson with ${tutorName} is confirmed for ${formattedDate} at ${formattedTime} (${durationMin} min). Questions? Call 0421 272 477.`;
     }
 
     // Send SMS
