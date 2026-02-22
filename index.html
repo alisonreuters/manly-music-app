@@ -704,6 +704,8 @@ function SessionPanel({ session, userRole, currentUserId, onClose, onSaveRecordi
 function AttendanceCalendar({ sessions, userRole, currentUserId, filterStudentIds, onSelectSession }) {
   const todayDate = new Date(2026, 1, 17);
   const [date, setDate] = useState(new Date(2026, 1, 1));
+  const [flyoutDate, setFlyoutDate] = useState(null); // Track which day's flyout is open
+  const [flyoutPosition, setFlyoutPosition] = useState({ x: 0, y: 0 });
 
   const year = date.getFullYear(), month = date.getMonth();
 
@@ -721,6 +723,27 @@ function AttendanceCalendar({ sessions, userRole, currentUserId, filterStudentId
     if (recs.some(r=>r.status==='cancelled')) return 'cancelled';
     if (recs.some(r=>r.status==='scheduled')) return 'scheduled';
     return null;
+  }
+
+  function handleDayClick(recs, dateStr, event) {
+    if (recs.length === 0) return;
+    
+    if (recs.length === 1) {
+      // Single session - open directly
+      onSelectSession(recs[0]);
+    } else {
+      // Multiple sessions - show flyout
+      const rect = event.currentTarget.getBoundingClientRect();
+      setFlyoutPosition({ 
+        x: rect.left + rect.width / 2, 
+        y: rect.bottom + 5 
+      });
+      setFlyoutDate(dateStr);
+    }
+  }
+
+  function closeFlyout() {
+    setFlyoutDate(null);
   }
 
   const firstDay    = new Date(year, month, 1).getDay();
@@ -747,6 +770,8 @@ function AttendanceCalendar({ sessions, userRole, currentUserId, filterStudentId
     const isToday = dateStr === TODAY;
     cells.push({ type:'day', key:dateStr, day:d, dateStr, recs, dom, isToday });
   }
+
+  const flyoutSessions = flyoutDate ? (dayMap[flyoutDate] || []) : [];
 
   return (
     <div className="cal-wrap">
@@ -779,7 +804,7 @@ function AttendanceCalendar({ sessions, userRole, currentUserId, filterStudentId
           if (isToday) cls += ' today';
 
           return (
-            <div key={key} className={cls} onClick={() => recs.length > 0 && onSelectSession(recs[0])}>
+            <div key={key} className={cls} onClick={(e) => handleDayClick(recs, dateStr, e)}>
               <div className="cal-day-num">{day}</div>
               {recs.length > 0 && (
                 <div className="cal-pips">
@@ -792,6 +817,82 @@ function AttendanceCalendar({ sessions, userRole, currentUserId, filterStudentId
           );
         })}
       </div>
+
+      {/* Flyout Menu for Multiple Sessions */}
+      {flyoutDate && flyoutSessions.length > 1 && (
+        <>
+          <div 
+            style={{
+              position: 'fixed',
+              top: 0,
+              left: 0,
+              right: 0,
+              bottom: 0,
+              zIndex: 100
+            }}
+            onClick={closeFlyout}
+          />
+          <div
+            style={{
+              position: 'fixed',
+              left: `${flyoutPosition.x}px`,
+              top: `${flyoutPosition.y}px`,
+              transform: 'translateX(-50%)',
+              background: 'var(--bg1)',
+              border: '2px solid var(--accent)',
+              borderRadius: '8px',
+              boxShadow: '0 4px 20px rgba(0,0,0,0.3)',
+              padding: '0.5rem',
+              zIndex: 101,
+              minWidth: '280px',
+              maxWidth: '400px'
+            }}
+            onClick={e => e.stopPropagation()}
+          >
+            <div style={{
+              fontSize: '.85rem',
+              fontWeight: 600,
+              color: 'var(--text2)',
+              padding: '.5rem .75rem',
+              borderBottom: '1px solid var(--border)'
+            }}>
+              {fmtDate(flyoutDate)} — {flyoutSessions.length} Sessions
+            </div>
+            {flyoutSessions.sort((a,b) => a.startTime.localeCompare(b.startTime)).map((session, idx) => {
+              const student = USERS.find(u => u.id === session.studentId);
+              const tutor = USERS.find(u => u.id === session.tutorId);
+              
+              return (
+                <div
+                  key={session.id}
+                  style={{
+                    padding: '.75rem',
+                    cursor: 'pointer',
+                    borderBottom: idx < flyoutSessions.length - 1 ? '1px solid var(--border)' : 'none',
+                    transition: 'background 0.2s'
+                  }}
+                  onMouseEnter={e => e.currentTarget.style.background = 'var(--bg2)'}
+                  onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
+                  onClick={() => {
+                    onSelectSession(session);
+                    closeFlyout();
+                  }}
+                >
+                  <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '.3rem'}}>
+                    <span style={{fontSize: '.9rem', fontWeight: 500, color: 'var(--text)'}}>
+                      {fmtTime(session.startTime)} - {fmtTime(session.endTime)}
+                    </span>
+                    <span className={statusClass(session.status)}>{session.status}</span>
+                  </div>
+                  <div style={{fontSize: '.85rem', color: 'var(--text2)'}}>
+                    {student?.name} • {session.instrument} • {tutor?.name}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </>
+      )}
     </div>
   );
 }
@@ -1056,6 +1157,105 @@ function BroadcastModal({ onClose, onSend }) {
           <button className="btn" onClick={onClose} disabled={sending}>Cancel</button>
           <button className="btn btn-primary" onClick={handleSend} disabled={sending || !message.trim()}>
             {sending ? '📤 Sending...' : '📢 Send Broadcast'}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ══════════════════════════════════════════════════
+   BROADCAST EMAIL MODAL
+══════════════════════════════════════════════════ */
+function BroadcastEmailModal({ onClose }) {
+  const [subject, setSubject] = useState('');
+  const [message, setMessage] = useState('');
+  const [recipientType, setRecipientType] = useState('all_students'); // 'all_students' | 'all_parents' | 'all_users'
+
+  // Calculate recipients
+  const students = USERS.filter(u => u.role === 'student');
+  const parents = USERS.filter(u => u.role === 'parent');
+  const allUsers = [...students, ...parents];
+  
+  const recipients = recipientType === 'all_students' ? students :
+                     recipientType === 'all_parents' ? parents : allUsers;
+  
+  const recipientsWithEmails = recipients.filter(u => u.email);
+  
+  function handleSend() {
+    if (!subject.trim() || !message.trim()) {
+      alert('Please enter both subject and message');
+      return;
+    }
+    
+    // Create BCC mailto link
+    const emailList = recipientsWithEmails.map(u => u.email).join(',');
+    const encodedSubject = encodeURIComponent(subject);
+    const encodedBody = encodeURIComponent(message);
+    
+    // Open mailto link (BCC to hide recipients from each other)
+    const mailtoLink = `mailto:?bcc=${emailList}&subject=${encodedSubject}&body=${encodedBody}`;
+    
+    window.location.href = mailtoLink;
+    
+    alert(`✓ Opening your email client with ${recipientsWithEmails.length} recipients in BCC.\n\nNote: You may need to click "Send" in your email client to complete the broadcast.`);
+    onClose();
+  }
+
+  return (
+    <div className="modal-overlay">
+      <div className="modal-box" style={{maxWidth:'600px'}}>
+        <div className="modal-hdr">
+          <h3>📧 Broadcast Email</h3>
+          <button className="btn btn-sm" onClick={onClose}>✕</button>
+        </div>
+        <div className="modal-body">
+          <div className="field">
+            <label>Recipients</label>
+            <select value={recipientType} onChange={e=>setRecipientType(e.target.value)}>
+              <option value="all_students">All Students ({students.filter(u=>u.email).length} with emails)</option>
+              <option value="all_parents">All Parents ({parents.filter(u=>u.email).length} with emails)</option>
+              <option value="all_users">All Students + Parents ({allUsers.filter(u=>u.email).length} with emails)</option>
+            </select>
+          </div>
+          
+          <div className="field">
+            <label>Subject</label>
+            <input 
+              type="text"
+              value={subject} 
+              onChange={e=>setSubject(e.target.value)}
+              placeholder="Email subject line..."
+            />
+          </div>
+          
+          <div className="field">
+            <label>Message</label>
+            <textarea 
+              value={message} 
+              onChange={e=>setMessage(e.target.value)}
+              placeholder="Type your email message here..."
+              style={{minHeight:'150px'}}
+            />
+            <div style={{fontSize:'.8rem',color:'var(--text3)',marginTop:'.3rem'}}>
+              {message.length} characters • Will email {recipientsWithEmails.length} recipients (BCC)
+            </div>
+          </div>
+          
+          {recipientsWithEmails.length < recipients.length && (
+            <div style={{padding:'.75rem',background:'var(--bg3)',border:'1px solid var(--border2)',borderRadius:'6px',fontSize:'.85rem',color:'var(--text3)'}}>
+              ⚠️ Note: {recipients.length - recipientsWithEmails.length} {recipientType === 'all_students' ? 'students' : recipientType === 'all_parents' ? 'parents' : 'users'} have no email address and will be skipped.
+            </div>
+          )}
+          
+          <div style={{padding:'.75rem',background:'var(--bg3)',border:'1px solid var(--accent)',borderRadius:'6px',fontSize:'.85rem',color:'var(--text2)'}}>
+            💡 <b>How it works:</b> Clicking "Send Email" will open your email client (Outlook, Gmail, Apple Mail, etc.) with all recipients in BCC. You'll need to click Send in your email client to complete the broadcast.
+          </div>
+        </div>
+        <div className="modal-footer">
+          <button className="btn" onClick={onClose}>Cancel</button>
+          <button className="btn btn-primary" onClick={handleSend} disabled={!subject.trim() || !message.trim()}>
+            📧 Open Email Client
           </button>
         </div>
       </div>
@@ -1998,6 +2198,7 @@ function AdminDashboard({ user, sessions, onLogout, onUpdateSession, onSaveRecor
   const [activeSession, setActiveSession] = useState(null);
   const [showSchedule,  setShowSchedule]  = useState(false);
   const [showBroadcast, setShowBroadcast] = useState(false);
+  const [showBroadcastEmail, setShowBroadcastEmail] = useState(false);
   const [filterStudent, setFilterStudent] = useState('all');
   const [view, setView]                   = useState('calendar'); // 'calendar' | 'list'
   const [searchQuery, setSearchQuery]     = useState('');
@@ -2094,6 +2295,7 @@ function AdminDashboard({ user, sessions, onLogout, onUpdateSession, onSaveRecor
             <button className={`btn btn-sm${view==='list'?' btn-primary':''}`} onClick={()=>setView('list')}>Day List</button>
             <button className={`btn btn-sm${view==='roster'?' btn-primary':''}`} onClick={()=>setView('roster')}>Tutor Roster</button>
             <button className="btn btn-amber btn-sm" onClick={()=>setShowBroadcast(true)}>📢 Broadcast SMS</button>
+            <button className="btn btn-blue btn-sm" onClick={()=>setShowBroadcastEmail(true)}>📧 Broadcast Email</button>
             <button className="btn btn-primary btn-sm" onClick={()=>setShowSchedule(true)}>+ Schedule</button>
           </div>
         </div>
@@ -2132,6 +2334,11 @@ function AdminDashboard({ user, sessions, onLogout, onUpdateSession, onSaveRecor
         <BroadcastModal
           onClose={()=>setShowBroadcast(false)}
           onSend={onSendBroadcast}
+        />
+      )}
+      {showBroadcastEmail && (
+        <BroadcastEmailModal
+          onClose={()=>setShowBroadcastEmail(false)}
         />
       )}
     </div>
