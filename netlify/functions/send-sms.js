@@ -20,7 +20,8 @@ exports.handler = async (event, context) => {
       startTime, 
       durationMin, 
       recipientPhone,
-      messageType = 'confirmation' 
+      messageType = 'confirmation',
+      broadcastMessage
     } = JSON.parse(event.body);
 
     // Get Twilio credentials from environment variables
@@ -35,26 +36,32 @@ exports.handler = async (event, context) => {
     // Initialize Twilio client
     const client = twilio(accountSid, authToken);
 
-    // Format date and time for message
-    const formattedDate = new Date(date).toLocaleDateString('en-AU', { 
-      weekday: 'short', 
-      day: 'numeric', 
-      month: 'short' 
-    });
-    
-    const formattedTime = startTime.replace(/^(\d+):(\d+)$/, (match, h, m) => {
-      const hour = parseInt(h);
-      const suffix = hour >= 12 ? 'pm' : 'am';
-      const displayHour = hour === 0 ? 12 : hour > 12 ? hour - 12 : hour;
-      return `${displayHour}:${m}${suffix}`;
-    });
-
     // Build message based on type
     let messageBody;
-    if (messageType === 'reminder') {
-      messageBody = `Reminder: ${studentName}'s ${instrument} lesson with ${tutorName} starts in 2 hours (${formattedTime} today). Questions? Call 0421 272 477.`;
+    
+    if (messageType === 'broadcast') {
+      // Custom broadcast message
+      messageBody = broadcastMessage;
     } else {
-      messageBody = `Manly Music: ${studentName}'s ${instrument} lesson with ${tutorName} is confirmed for ${formattedDate} at ${formattedTime} (${durationMin} min). Questions? Call 0421 272 477.`;
+      // Format date and time for session messages
+      const formattedDate = new Date(date).toLocaleDateString('en-AU', { 
+        weekday: 'short', 
+        day: 'numeric', 
+        month: 'short' 
+      });
+      
+      const formattedTime = startTime.replace(/^(\d+):(\d+)$/, (match, h, m) => {
+        const hour = parseInt(h);
+        const suffix = hour >= 12 ? 'pm' : 'am';
+        const displayHour = hour === 0 ? 12 : hour > 12 ? hour - 12 : hour;
+        return `${displayHour}:${m}${suffix}`;
+      });
+
+      if (messageType === 'reminder') {
+        messageBody = `Reminder: ${studentName}'s ${instrument} lesson with ${tutorName} starts in 2 hours (${formattedTime} today). Questions? Call 0421 272 477.`;
+      } else {
+        messageBody = `Manly Music: ${studentName}'s ${instrument} lesson with ${tutorName} is confirmed for ${formattedDate} at ${formattedTime} (${durationMin} min). Questions? Call 0421 272 477.`;
+      }
     }
 
     // Send SMS
