@@ -615,11 +615,11 @@ function SessionPanel({ session, userRole, currentUserId, onClose, onSaveRecordi
             </div>
           )}
 
-          {/* ── Student Comments (completed only) ── */}
-          {isCompleted && (
+          {/* ── Student Comments (scheduled & completed) ── */}
+          {(isScheduled || isCompleted) && (
             <div className="sp-section">
               <div className="sp-section-title" style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:'.6rem'}}>
-                Student Comments
+                {isScheduled ? 'Practice Notes' : 'Student Comments'}
                 {(isStudent || isTutorAdmin) && !editingStudentComment && (
                   <button className="btn btn-sm" onClick={()=>setEditSC(true)}>Edit</button>
                 )}
@@ -627,14 +627,16 @@ function SessionPanel({ session, userRole, currentUserId, onClose, onSaveRecordi
               {editingStudentComment ? (
                 <div>
                   <textarea style={{width:'100%',background:'var(--bg3)',border:'1px solid var(--border2)',borderRadius:6,color:'var(--text)',padding:'1rem',minHeight:120,fontSize:'.92rem',resize:'vertical'}}
-                    value={studentComment} onChange={e=>setStudentComment(e.target.value)}/>
+                    value={studentComment} onChange={e=>setStudentComment(e.target.value)}
+                    placeholder={isScheduled ? "Add practice notes before your lesson..." : "Add your thoughts about this lesson..."}
+                  />
                   <div style={{display:'flex',gap:'.5rem',marginTop:'.5rem'}}>
                     <button className="btn btn-sm btn-primary" onClick={saveStudentComment}>Save</button>
                     <button className="btn btn-sm" onClick={()=>{setStudentComment(session.studentComments);setEditSC(false);}}>Cancel</button>
                   </div>
                 </div>
               ) : (
-                <p className="sp-comment">{session.studentComments || <span className="sp-empty">No student comments yet.</span>}</p>
+                <p className="sp-comment">{session.studentComments || <span className="sp-empty">{isScheduled ? 'No practice notes yet.' : 'No student comments yet.'}</span>}</p>
               )}
             </div>
           )}
