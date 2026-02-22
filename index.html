@@ -739,9 +739,13 @@ function AttendanceCalendar({ sessions, userRole, currentUserId, filterStudentId
     if (recs.length === 0) return;
     
     if (recs.length === 1) {
-      // Single session - close flyout first, then open session directly
-      closeFlyout();
-      onSelectSession(recs[0]);
+      // Single session - close flyout first with small delay to ensure React updates
+      if (flyoutDate) {
+        closeFlyout();
+        setTimeout(() => onSelectSession(recs[0]), 50);
+      } else {
+        onSelectSession(recs[0]);
+      }
     } else {
       // Multiple sessions - show flyout in top-right
       setFlyoutDate(dateStr);
