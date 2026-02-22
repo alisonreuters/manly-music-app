@@ -739,7 +739,8 @@ function AttendanceCalendar({ sessions, userRole, currentUserId, filterStudentId
     if (recs.length === 0) return;
     
     if (recs.length === 1) {
-      // Single session - open directly
+      // Single session - close flyout first, then open session directly
+      closeFlyout();
       onSelectSession(recs[0]);
     } else {
       // Multiple sessions - show flyout in top-right
