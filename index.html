@@ -707,6 +707,17 @@ function AttendanceCalendar({ sessions, userRole, currentUserId, filterStudentId
   const [flyoutDate, setFlyoutDate] = useState(null); // Track which day's flyout is open
 
   const year = date.getFullYear(), month = date.getMonth();
+  
+  // Close flyout on ESC key
+  useEffect(() => {
+    function handleEscape(e) {
+      if (e.key === 'Escape' && flyoutDate) {
+        closeFlyout();
+      }
+    }
+    window.addEventListener('keydown', handleEscape);
+    return () => window.removeEventListener('keydown', handleEscape);
+  }, [flyoutDate]);
 
   // build day → sessions map
   const dayMap = {};
@@ -815,6 +826,7 @@ function AttendanceCalendar({ sessions, userRole, currentUserId, filterStudentId
       {/* Flyout Menu for Multiple Sessions */}
       {flyoutDate && flyoutSessions.length > 1 && (
         <>
+          {/* Backdrop overlay */}
           <div 
             style={{
               position: 'fixed',
@@ -822,10 +834,12 @@ function AttendanceCalendar({ sessions, userRole, currentUserId, filterStudentId
               left: 0,
               right: 0,
               bottom: 0,
+              background: 'rgba(0, 0, 0, 0.5)',
               zIndex: 100
             }}
             onClick={closeFlyout}
           />
+          {/* Flyout content */}
           <div
             style={{
               position: 'fixed',
@@ -835,7 +849,7 @@ function AttendanceCalendar({ sessions, userRole, currentUserId, filterStudentId
               border: '2px solid var(--accent)',
               borderRadius: '8px',
               boxShadow: '0 4px 20px rgba(0,0,0,0.3)',
-              padding: '0.5rem',
+              padding: '0',
               zIndex: 101,
               minWidth: '320px',
               maxWidth: '450px',
@@ -844,14 +858,45 @@ function AttendanceCalendar({ sessions, userRole, currentUserId, filterStudentId
             }}
             onClick={e => e.stopPropagation()}
           >
+            {/* Header with close button */}
             <div style={{
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
               fontSize: '.85rem',
               fontWeight: 600,
               color: 'var(--text2)',
-              padding: '.5rem .75rem',
-              borderBottom: '1px solid var(--border)'
+              padding: '.75rem 1rem',
+              borderBottom: '1px solid var(--border)',
+              position: 'sticky',
+              top: 0,
+              background: 'var(--bg1)',
+              zIndex: 1
             }}>
-              {fmtDate(flyoutDate)} — {flyoutSessions.length} Sessions
+              <span>{fmtDate(flyoutDate)} — {flyoutSessions.length} Sessions</span>
+              <button 
+                onClick={closeFlyout}
+                style={{
+                  background: 'none',
+                  border: 'none',
+                  color: 'var(--text2)',
+                  fontSize: '1.2rem',
+                  cursor: 'pointer',
+                  padding: '0',
+                  width: '24px',
+                  height: '24px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  borderRadius: '4px',
+                  transition: 'background 0.2s'
+                }}
+                onMouseEnter={e => e.currentTarget.style.background = 'var(--bg3)'}
+                onMouseLeave={e => e.currentTarget.style.background = 'none'}
+                title="Close (ESC or click outside)"
+              >
+                ✕
+              </button>
             </div>
             {flyoutSessions.sort((a,b) => a.startTime.localeCompare(b.startTime)).map((session, idx) => {
               const student = USERS.find(u => u.id === session.studentId);
@@ -885,6 +930,17 @@ function AttendanceCalendar({ sessions, userRole, currentUserId, filterStudentId
                 </div>
               );
             })}
+            {/* Hint text */}
+            <div style={{
+              padding: '.5rem .75rem',
+              fontSize: '.75rem',
+              color: 'var(--text3)',
+              textAlign: 'center',
+              borderTop: '1px solid var(--border)',
+              background: 'var(--bg2)'
+            }}>
+              Click session to view details • ESC or click outside to close
+            </div>
           </div>
         </>
       )}
