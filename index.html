@@ -509,6 +509,226 @@ function RecordingSection({ session, canRecord, userRole, onSaveRecording }) {
 }
 
 /* ══════════════════════════════════════════════════
+   STAR RATING COMPONENT
+══════════════════════════════════════════════════ */
+function StarRating({ rating, onChange, readOnly }) {
+  const [hoverRating, setHoverRating] = useState(0);
+  
+  return (
+    <div style={{display: 'flex', gap: '0.25rem'}}>
+      {[1, 2, 3, 4, 5].map(star => {
+        const filled = star <= (hoverRating || rating);
+        return (
+          <div
+            key={star}
+            onClick={() => !readOnly && onChange(star)}
+            onMouseEnter={() => !readOnly && setHoverRating(star)}
+            onMouseLeave={() => !readOnly && setHoverRating(0)}
+            style={{
+              fontSize: '1.5rem',
+              color: filled ? '#FFB800' : '#3a3a3a',
+              cursor: readOnly ? 'default' : 'pointer',
+              transition: 'color 0.2s, transform 0.1s',
+              userSelect: 'none'
+            }}
+            onMouseDown={e => !readOnly && (e.currentTarget.style.transform = 'scale(0.9)')}
+            onMouseUp={e => !readOnly && (e.currentTarget.style.transform = 'scale(1)')}
+          >
+            ★
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+/* ══════════════════════════════════════════════════
+   ASSESSMENT SECTION COMPONENT
+══════════════════════════════════════════════════ */
+function AssessmentSection({ session, userRole, onUpdateAssessment }) {
+  const [editing, setEditing] = useState(false);
+  const [ratings, setRatings] = useState({
+    technique: session.ratingTechnique || 0,
+    rhythm: session.ratingRhythm || 0,
+    tone: session.ratingTone || 0,
+    sightReading: session.ratingSightReading || 0,
+    expression: session.ratingExpression || 0,
+    focus: session.ratingFocus || 0
+  });
+  const [notes, setNotes] = useState(session.assessmentNotes || '');
+
+  const isTutorAdmin = userRole === 'tutor' || userRole === 'admin';
+  const hasAssessment = Object.values(ratings).some(r => r > 0);
+  
+  const categories = [
+    { key: 'technique', label: '🎵 Technique', icon: '🎵' },
+    { key: 'rhythm', label: '🎶 Rhythm/Timing', icon: '🎶' },
+    { key: 'tone', label: '🎼 Tone/Quality', icon: '🎼' },
+    { key: 'sightReading', label: '📖 Sight Reading', icon: '📖' },
+    { key: 'expression', label: '🎭 Expression', icon: '🎭' },
+    { key: 'focus', label: '🎯 Focus/Preparation', icon: '🎯' }
+  ];
+
+  const average = hasAssessment 
+    ? (Object.values(ratings).reduce((sum, r) => sum + r, 0) / Object.values(ratings).filter(r => r > 0).length).toFixed(1)
+    : null;
+
+  function handleSave() {
+    onUpdateAssessment(session.id, {
+      ratingTechnique: ratings.technique || null,
+      ratingRhythm: ratings.rhythm || null,
+      ratingTone: ratings.tone || null,
+      ratingSightReading: ratings.sightReading || null,
+      ratingExpression: ratings.expression || null,
+      ratingFocus: ratings.focus || null,
+      assessmentNotes: notes,
+      assessedAt: new Date().toISOString(),
+      assessedBy: null // Will be set on backend
+    });
+    setEditing(false);
+  }
+
+  function handleCancel() {
+    setRatings({
+      technique: session.ratingTechnique || 0,
+      rhythm: session.ratingRhythm || 0,
+      tone: session.ratingTone || 0,
+      sightReading: session.ratingSightReading || 0,
+      expression: session.ratingExpression || 0,
+      focus: session.ratingFocus || 0
+    });
+    setNotes(session.assessmentNotes || '');
+    setEditing(false);
+  }
+
+  return (
+    <div className="sp-section" style={{background: 'linear-gradient(135deg, var(--bg2) 0%, var(--bg3) 100%)', border: '2px solid var(--accent)'}}>
+      <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem'}}>
+        <div style={{display: 'flex', alignItems: 'center', gap: '1rem'}}>
+          <div className="sp-section-title" style={{margin: 0, fontSize: '.9rem'}}>
+            ⭐ SESSION ASSESSMENT
+          </div>
+          {average && !editing && (
+            <div style={{
+              background: '#FFB800',
+              color: '#000',
+              padding: '.3rem .75rem',
+              borderRadius: '20px',
+              fontSize: '.85rem',
+              fontWeight: 600
+            }}>
+              Average: {average} / 5.0
+            </div>
+          )}
+        </div>
+        {isTutorAdmin && !editing && (
+          <button className="btn btn-sm btn-primary" onClick={() => setEditing(true)}>
+            {hasAssessment ? 'Edit Assessment' : 'Add Assessment'}
+          </button>
+        )}
+      </div>
+
+      {!hasAssessment && !editing ? (
+        <div style={{
+          padding: '2rem',
+          textAlign: 'center',
+          color: 'var(--text3)',
+          fontSize: '.9rem'
+        }}>
+          {isTutorAdmin 
+            ? '📊 No assessment yet. Click "Add Assessment" to rate this session.' 
+            : '📊 Tutor has not added an assessment for this session yet.'}
+        </div>
+      ) : (
+        <div style={{display: 'flex', flexDirection: 'column', gap: '1rem'}}>
+          {/* Rating Grid */}
+          <div style={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
+            gap: '1rem'
+          }}>
+            {categories.map(cat => (
+              <div key={cat.key} style={{
+                background: 'var(--bg1)',
+                padding: '.75rem 1rem',
+                borderRadius: '8px',
+                border: '1px solid var(--border)'
+              }}>
+                <div style={{
+                  fontSize: '.85rem',
+                  fontWeight: 500,
+                  color: 'var(--text2)',
+                  marginBottom: '.5rem'
+                }}>
+                  {cat.label}
+                </div>
+                <StarRating
+                  rating={ratings[cat.key]}
+                  onChange={(value) => setRatings({...ratings, [cat.key]: value})}
+                  readOnly={!editing}
+                />
+              </div>
+            ))}
+          </div>
+
+          {/* Assessment Notes */}
+          <div>
+            <div style={{fontSize: '.85rem', fontWeight: 500, color: 'var(--text2)', marginBottom: '.5rem'}}>
+              Assessment Notes
+            </div>
+            {editing ? (
+              <textarea
+                value={notes}
+                onChange={e => setNotes(e.target.value)}
+                placeholder="Add detailed feedback about the student's performance..."
+                style={{
+                  width: '100%',
+                  background: 'var(--bg1)',
+                  border: '1px solid var(--border2)',
+                  borderRadius: '6px',
+                  color: 'var(--text)',
+                  padding: '1rem',
+                  minHeight: '100px',
+                  fontSize: '.92rem',
+                  resize: 'vertical'
+                }}
+              />
+            ) : (
+              <div style={{
+                background: 'var(--bg1)',
+                padding: '1rem',
+                borderRadius: '6px',
+                border: '1px solid var(--border)',
+                fontSize: '.92rem',
+                color: 'var(--text2)',
+                minHeight: '60px'
+              }}>
+                {notes || <span style={{fontStyle: 'italic', color: 'var(--text3)'}}>No notes added</span>}
+              </div>
+            )}
+          </div>
+
+          {/* Action Buttons */}
+          {editing && (
+            <div style={{display: 'flex', gap: '.5rem', justifyContent: 'flex-end'}}>
+              <button className="btn btn-sm" onClick={handleCancel}>Cancel</button>
+              <button className="btn btn-sm btn-primary" onClick={handleSave}>Save Assessment</button>
+            </div>
+          )}
+
+          {/* Timestamp */}
+          {session.assessedAt && !editing && (
+            <div style={{fontSize: '.75rem', color: 'var(--text3)', textAlign: 'right'}}>
+              Last assessed: {new Date(session.assessedAt).toLocaleString('en-AU')}
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
+/* ══════════════════════════════════════════════════
    SESSION DETAIL PANEL
 ══════════════════════════════════════════════════ */
 function SessionPanel({ session, userRole, currentUserId, onClose, onSaveRecording, onUpdateSession, onMarkStatus, onSendReminder }) {
@@ -568,6 +788,15 @@ function SessionPanel({ session, userRole, currentUserId, onClose, onSaveRecordi
             <div className="sp-row"><span className="sp-lbl">Instrument</span><span className="sp-val">{session.instrument}</span></div>
             {session.accompaniment && <div className="sp-row"><span className="sp-lbl">Accompaniment</span><span className="sp-val">{session.accompaniment}</span></div>}
           </div>
+
+          {/* ── Assessment Section (PROMINENT) ── */}
+          {(isCompleted || (isTutorAdmin && isScheduled)) && (
+            <AssessmentSection
+              session={session}
+              userRole={userRole}
+              onUpdateAssessment={onUpdateSession}
+            />
+          )}
 
           {/* ── Session Summary (scheduled & completed) ── */}
           <div className="sp-section">
@@ -1648,7 +1877,7 @@ function LandingPage({ onSelectLogin }) {
       <div className="login-section">
         <h3>Access Your Portal</h3>
         <div className="login-buttons">
-          {[['student','Student'],['parent','Parent'],['staff','Admin']].map(([val,label])=>(
+          {[['student','Student'],['parent','Parent'],['tutor','Tutor'],['staff','Admin']].map(([val,label])=>(
             <button key={val} className="login-btn" onClick={()=>onSelectLogin(val)}>
               {label} Login
             </button>
@@ -1671,6 +1900,7 @@ function LoginScreen({ onLogin, userType, onBack, users }) {
     e.preventDefault();
     const user = users.find(u=>u.email===email && u.password===pw);
     if (user) {
+      if (userType==='tutor' && user.role==='tutor') { onLogin(user); return; }
       if (userType==='staff' && (user.role==='admin'||user.role==='tutor')) { onLogin(user); return; }
       if (userType===user.role) { onLogin(user); return; }
       setErr('Invalid credentials for this portal type.');
@@ -2448,7 +2678,17 @@ function App() {
           recordings: [],
           payrollTutorPaid: s.payroll_tutor_paid,
           paymentReceived: s.payment_received,
-          invoiced: s.invoiced
+          invoiced: s.invoiced,
+          // Assessment fields
+          ratingTechnique: s.rating_technique,
+          ratingRhythm: s.rating_rhythm,
+          ratingTone: s.rating_tone,
+          ratingSightReading: s.rating_sight_reading,
+          ratingExpression: s.rating_expression,
+          ratingFocus: s.rating_focus,
+          assessmentNotes: s.assessment_notes,
+          assessedAt: s.assessed_at,
+          assessedBy: s.assessed_by
         }));
 
         setUsers(usersData);
@@ -2474,6 +2714,18 @@ function App() {
       if (patch.tutorComments !== undefined) dbPatch.tutor_comments = patch.tutorComments;
       if (patch.studentComments !== undefined) dbPatch.student_comments = patch.studentComments;
       if (patch.status !== undefined) dbPatch.status = patch.status;
+      if (patch.plannedSummary !== undefined) dbPatch.planned_summary = patch.plannedSummary;
+      
+      // Assessment fields
+      if (patch.ratingTechnique !== undefined) dbPatch.rating_technique = patch.ratingTechnique;
+      if (patch.ratingRhythm !== undefined) dbPatch.rating_rhythm = patch.ratingRhythm;
+      if (patch.ratingTone !== undefined) dbPatch.rating_tone = patch.ratingTone;
+      if (patch.ratingSightReading !== undefined) dbPatch.rating_sight_reading = patch.ratingSightReading;
+      if (patch.ratingExpression !== undefined) dbPatch.rating_expression = patch.ratingExpression;
+      if (patch.ratingFocus !== undefined) dbPatch.rating_focus = patch.ratingFocus;
+      if (patch.assessmentNotes !== undefined) dbPatch.assessment_notes = patch.assessmentNotes;
+      if (patch.assessedAt !== undefined) dbPatch.assessed_at = patch.assessedAt;
+      if (patch.assessedBy !== undefined) dbPatch.assessed_by = patch.assessedBy;
       
       await supabase.from('sessions').update(dbPatch).eq('id', id);
     } catch (error) {
