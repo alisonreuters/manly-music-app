@@ -1,0 +1,3157 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Expires" content="0">
+<title>Manly Music — Portal V5 — Live Database</title>
+<script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+<script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+<script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg:       #080b10;
+  --bg1:      #0d1117;
+  --bg2:      #111620;
+  --bg3:      #161c28;
+  --border:   #1e2535;
+  --border2:  #252d3e;
+  --text:     #e2e8f0;
+  --text2:    #94a3b8;
+  --text3:    #4a5568;
+  --green:    #22c55e;
+  --red:      #ef4444;
+  --blue:     #3b82f6;
+  --amber:    #f59e0b;
+  --slate:    #8895a7;
+  --accent:   #6b8cff;
+  --radius:   8px;
+}
+* { margin:0; padding:0; box-sizing:border-box; }
+html { scroll-behavior: smooth; }
+body { font-family:'DM Sans',sans-serif; background:var(--bg); color:var(--text); min-height:100vh; }
+input,textarea,select { font-family:'DM Sans',sans-serif; }
+
+/* ── Scrollbar ── */
+::-webkit-scrollbar { width:6px; height:6px; }
+::-webkit-scrollbar-track { background:var(--bg1); }
+::-webkit-scrollbar-thumb { background:var(--border2); border-radius:3px; }
+
+/* ══════════════════════════════════
+   MM LOGO
+══════════════════════════════════ */
+.logo-wrap { display:flex; align-items:center; gap:1rem; }
+.logo-wordmark { font-size:0.7rem; letter-spacing:.22em; text-transform:uppercase; color:var(--slate); font-weight:500; }
+
+/* ══════════════════════════════════
+   LANDING
+══════════════════════════════════ */
+.landing {
+  min-height:100vh;
+  background: radial-gradient(ellipse 80% 50% at 50% -10%, #1a2340 0%, var(--bg) 70%);
+}
+.landing-header { padding:1.75rem 2.5rem; border-bottom:1px solid var(--border); }
+.landing-hero { text-align:center; padding:5rem 2rem 3rem; max-width:820px; margin:0 auto; }
+.landing-hero h1 { font-size:clamp(2rem,5vw,3.8rem); font-weight:300; line-height:1.15; letter-spacing:-.03em; margin-bottom:1.25rem; }
+.landing-hero p { font-size:1.1rem; color:var(--text2); font-weight:300; }
+.promo-box { background:var(--bg2); border:1px solid var(--border2); border-radius:10px; padding:1.75rem 2.25rem; margin:2.5rem auto; max-width:640px; }
+.promo-box h2 { font-size:1.4rem; font-weight:400; margin-bottom:.6rem; }
+.promo-box p { color:var(--text3); }
+.login-section { max-width:380px; margin:2rem auto 4rem; padding:0 2rem; }
+.login-section h3 { text-align:center; margin-bottom:1.5rem; font-weight:400; color:var(--text3); font-size:.8rem; letter-spacing:.12em; text-transform:uppercase; }
+.login-buttons { display:flex; flex-direction:column; gap:.8rem; }
+.login-btn { background:transparent; border:1px solid var(--border2); color:var(--text2); padding:1rem; border-radius:var(--radius); font-size:.95rem; cursor:pointer; transition:all .2s; letter-spacing:.02em; }
+.login-btn:hover { background:var(--bg3); border-color:var(--accent); color:var(--text); }
+
+/* ══════════════════════════════════
+   APP SHELL
+══════════════════════════════════ */
+.app-header { background:var(--bg1); border-bottom:1px solid var(--border); padding:1rem 2rem; position:sticky; top:0; z-index:100; }
+.app-header-inner { max-width:1500px; margin:0 auto; display:flex; justify-content:space-between; align-items:center; }
+.app-header h2 { font-size:1.1rem; font-weight:500; }
+.app-header p { font-size:.8rem; color:var(--text3); margin-top:.15rem; }
+.dashboard { max-width:1500px; margin:0 auto; padding:1.75rem 2rem; }
+
+/* ══════════════════════════════════
+   BUTTONS & INPUTS
+══════════════════════════════════ */
+.btn { background:transparent; border:1px solid var(--border2); color:var(--text2); padding:.55rem 1.2rem; border-radius:6px; cursor:pointer; transition:all .2s; font-size:.875rem; font-family:'DM Sans',sans-serif; }
+.btn:hover { background:var(--bg3); border-color:var(--accent); color:var(--text); }
+.btn-primary { background:var(--accent); border-color:var(--accent); color:#fff; }
+.btn-primary:hover { background:#5577ee; border-color:#5577ee; color:#fff; }
+.btn-sm { padding:.35rem .8rem; font-size:.8rem; }
+.btn-green  { border-color:rgba(34,197,94,.4);  color:var(--green);  }
+.btn-red    { border-color:rgba(239,68,68,.4);  color:var(--red);    }
+.btn-blue   { border-color:rgba(59,130,246,.4); color:var(--blue);   }
+.btn-amber  { border-color:rgba(245,158,11,.4); color:var(--amber);  }
+.btn-green:hover  { background:rgba(34,197,94,.1);  }
+.btn-red:hover    { background:rgba(239,68,68,.1);  }
+.btn-blue:hover   { background:rgba(59,130,246,.1); }
+.btn-amber:hover  { background:rgba(245,158,11,.1); }
+
+.field { display:flex; flex-direction:column; gap:.4rem; margin-bottom:1rem; }
+.field label { font-size:.78rem; color:var(--text2); letter-spacing:.04em; text-transform:uppercase; }
+.field input,.field textarea,.field select {
+  background:var(--bg2); border:1px solid var(--border2); border-radius:6px;
+  color:var(--text); padding:.7rem 1rem; font-size:.9rem; outline:none; transition:border-color .2s;
+  width:100%;
+}
+.field input:focus,.field textarea:focus,.field select:focus { border-color:var(--accent); }
+.field textarea { min-height:80px; resize:vertical; }
+.field select option { background:var(--bg2); }
+
+/* Make date/time pickers more visible */
+input[type="date"], input[type="time"] {
+  position: relative;
+  color: var(--text);
+  cursor: pointer;
+}
+input[type="date"]::-webkit-calendar-picker-indicator,
+input[type="time"]::-webkit-calendar-picker-indicator {
+  cursor: pointer;
+  opacity: 1;
+  filter: invert(0.8);
+  font-size: 1.2rem;
+  padding: 0.2rem;
+}
+
+/* ══════════════════════════════════
+   STATS GRID
+══════════════════════════════════ */
+.stats-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(150px,1fr)); gap:1rem; margin-bottom:1.75rem; }
+.stat-card { background:var(--bg2); border:1px solid var(--border); padding:1.25rem 1.5rem; border-radius:var(--radius); }
+.stat-val { font-size:2rem; font-weight:300; letter-spacing:-.03em; margin-bottom:.3rem; }
+.stat-lbl { font-size:.75rem; color:var(--text3); text-transform:uppercase; letter-spacing:.06em; }
+
+/* ══════════════════════════════════
+   CARD
+══════════════════════════════════ */
+.card { background:var(--bg2); border:1px solid var(--border); border-radius:var(--radius); padding:1.5rem; margin-bottom:1.25rem; }
+.card-hdr { display:flex; justify-content:space-between; align-items:center; margin-bottom:1.25rem; }
+.card-title { font-size:1rem; font-weight:500; }
+
+/* ══════════════════════════════════
+   BADGES
+══════════════════════════════════ */
+.badge { display:inline-flex; align-items:center; padding:.2rem .65rem; border-radius:20px; font-size:.72rem; font-weight:500; border:1px solid; }
+.badge-attended  { background:rgba(34,197,94,.1);  border-color:rgba(34,197,94,.4);  color:var(--green); }
+.badge-missed    { background:rgba(239,68,68,.1);  border-color:rgba(239,68,68,.4);  color:var(--red);   }
+.badge-scheduled { background:rgba(59,130,246,.1); border-color:rgba(59,130,246,.4); color:var(--blue);  }
+.badge-cancelled { background:rgba(245,158,11,.1); border-color:rgba(245,158,11,.4); color:var(--amber); }
+.badge-pending   { background:rgba(245,158,11,.1); border-color:rgba(245,158,11,.4); color:var(--amber); }
+.badge-complete  { background:rgba(34,197,94,.1);  border-color:rgba(34,197,94,.4);  color:var(--green); }
+.badge-progress  { background:rgba(59,130,246,.1); border-color:rgba(59,130,246,.4); color:var(--blue);  }
+
+/* ══════════════════════════════════
+   MODAL
+══════════════════════════════════ */
+.modal-overlay { position:fixed; inset:0; background:rgba(0,0,0,.75); display:flex; align-items:center; justify-content:center; z-index:500; padding:1rem; }
+.modal-box { background:var(--bg2); border:1px solid var(--border2); border-radius:12px; width:100%; max-width:560px; max-height:90vh; overflow-y:auto; }
+.modal-hdr { padding:1.5rem 1.75rem 1rem; display:flex; justify-content:space-between; align-items:flex-start; border-bottom:1px solid var(--border); }
+.modal-hdr h3 { font-size:1.15rem; font-weight:500; }
+.modal-body { padding:1.5rem 1.75rem; }
+.modal-footer { padding:1rem 1.75rem 1.5rem; display:flex; gap:.75rem; justify-content:flex-end; border-top:1px solid var(--border); }
+
+/* ══════════════════════════════════
+   CALENDAR SHELL
+══════════════════════════════════ */
+.cal-wrap { background:var(--bg2); border:1px solid var(--border); border-radius:var(--radius); padding:1.5rem; margin-bottom:1.5rem; }
+.cal-toolbar { display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:1rem; margin-bottom:1.25rem; }
+.cal-nav { display:flex; align-items:center; gap:.6rem; }
+.cal-nav-btn { background:transparent; border:1px solid var(--border2); color:var(--text2); width:30px; height:30px; border-radius:5px; cursor:pointer; display:flex; align-items:center; justify-content:center; transition:all .2s; }
+.cal-nav-btn:hover { background:var(--bg3); border-color:var(--accent); color:var(--text); }
+.cal-month { font-size:1.15rem; font-weight:400; min-width:170px; text-align:center; }
+.cal-stats { display:flex; gap:1.25rem; flex-wrap:wrap; align-items:center; }
+.cal-stat { display:flex; align-items:center; gap:.4rem; font-size:.8rem; color:var(--text2); }
+.dot { width:8px; height:8px; border-radius:50%; flex-shrink:0; }
+.dot-green  { background:var(--green); }
+.dot-red    { background:var(--red);   }
+.dot-blue   { background:var(--blue);  }
+.dot-amber  { background:var(--amber); }
+.rate-pill { background:var(--bg3); border:1px solid var(--border2); border-radius:20px; padding:.2rem .8rem; font-size:.8rem; color:var(--text2); }
+.rate-pill b { color:var(--green); }
+.rate-ok b { color:var(--amber); }
+.rate-poor b { color:var(--red); }
+
+/* student filter */
+.cal-filter { display:flex; gap:.4rem; flex-wrap:wrap; margin-bottom:1rem; }
+.filter-btn { background:transparent; border:1px solid var(--border); color:var(--text3); padding:.3rem .8rem; border-radius:20px; font-size:.78rem; cursor:pointer; transition:all .2s; }
+.filter-btn.active, .filter-btn:hover { background:rgba(107,140,255,.12); border-color:var(--accent); color:var(--accent); }
+
+/* grid */
+.cal-grid { display:grid; grid-template-columns:repeat(7,1fr); gap:3px; }
+.cal-day-hdr { text-align:center; padding:.5rem 0; color:var(--text3); font-size:.72rem; font-weight:500; letter-spacing:.06em; text-transform:uppercase; }
+.cal-cell { min-height:56px; border:1px solid var(--border); border-radius:5px; padding:.4rem .5rem; cursor:pointer; transition:all .18s; position:relative; display:flex; flex-direction:column; }
+.cal-cell:hover { border-color:var(--border2); background:var(--bg3); }
+.cal-cell.other-month { opacity:.2; pointer-events:none; }
+.cal-cell.today { border-color:var(--accent); }
+.cal-cell.has-attended  { border-color:rgba(34,197,94,.4);  background:rgba(34,197,94,.04);  }
+.cal-cell.has-missed    { border-color:rgba(239,68,68,.4);  background:rgba(239,68,68,.04);  }
+.cal-cell.has-scheduled { border-color:rgba(59,130,246,.3); background:rgba(59,130,246,.04); }
+.cal-cell.has-cancelled { border-color:rgba(245,158,11,.3); background:rgba(245,158,11,.04); }
+.cal-day-num { font-size:.78rem; color:var(--text2); line-height:1; margin-bottom:.3rem; font-family:'DM Mono',monospace; }
+.cal-cell.today .cal-day-num { color:var(--accent); font-weight:600; }
+.cal-pips { display:flex; gap:2px; flex-wrap:wrap; }
+.cal-pip { width:6px; height:6px; border-radius:50%; }
+
+/* ══════════════════════════════════
+   SESSION DETAIL PANEL (slide-in)
+══════════════════════════════════ */
+.session-panel-overlay { position:fixed; inset:0; background:rgba(0,0,0,.5); z-index:300; }
+.session-panel {
+  position:fixed; top:0; right:0; bottom:0; width:min(75vw,900px);
+  background:var(--bg1); border-left:1px solid var(--border2);
+  z-index:301; overflow-y:auto;
+  animation: slideIn .22s ease;
+}
+@keyframes slideIn { from { transform:translateX(100%); } to { transform:translateX(0); } }
+.sp-hdr { padding:1.5rem; border-bottom:1px solid var(--border); display:flex; justify-content:space-between; align-items:flex-start; position:sticky; top:0; background:var(--bg1); z-index:1; }
+.sp-hdr h3 { font-size:1.05rem; font-weight:500; }
+.sp-body { padding:2rem; display:flex; flex-direction:column; gap:1.75rem; }
+.sp-section { background:var(--bg2); border:1px solid var(--border); border-radius:var(--radius); padding:1.5rem 1.75rem; }
+.sp-section-title { font-size:.72rem; color:var(--text3); text-transform:uppercase; letter-spacing:.08em; margin-bottom:.75rem; }
+.sp-row { display:flex; justify-content:space-between; align-items:flex-start; gap:1rem; margin-bottom:.5rem; font-size:.88rem; }
+.sp-row:last-child { margin-bottom:0; }
+.sp-lbl { color:var(--text3); flex-shrink:0; }
+.sp-val { color:var(--text); text-align:right; }
+.sp-comment { font-size:.88rem; color:var(--text2); line-height:1.55; }
+.sp-empty { font-size:.85rem; color:var(--text3); font-style:italic; }
+
+/* recording UI */
+.rec-area { display:flex; flex-direction:column; gap:.75rem; }
+.rec-btn-row { display:flex; gap:.6rem; }
+.rec-item { background:var(--bg3); border:1px solid var(--border); border-radius:6px; padding:.75rem 1rem; display:flex; justify-content:space-between; align-items:center; font-size:.85rem; }
+.rec-item-name { color:var(--text2); }
+.rec-pulse { display:inline-block; width:10px; height:10px; border-radius:50%; background:var(--red); animation:pulse 1.2s ease-in-out infinite; }
+@keyframes pulse { 0%,100%{opacity:1;} 50%{opacity:.3;} }
+.rec-timer { font-family:'DM Mono',monospace; font-size:1.1rem; color:var(--red); }
+
+/* ══════════════════════════════════
+   TUTOR ROSTER
+══════════════════════════════════ */
+.roster-wrap { margin-bottom:1.5rem; }
+.roster-tutor-list { display:grid; grid-template-columns:repeat(auto-fill,minmax(200px,1fr)); gap:.75rem; margin-bottom:1.5rem; }
+.roster-tutor-card {
+  background:var(--bg2); border:1px solid var(--border); border-radius:var(--radius);
+  padding:1.1rem 1.25rem; cursor:pointer; transition:all .2s;
+}
+.roster-tutor-card:hover { border-color:var(--accent); background:var(--bg3); }
+.roster-tutor-card.active { border-color:var(--accent); background:rgba(107,140,255,.07); }
+.rtc-name { font-size:.95rem; font-weight:500; margin-bottom:.4rem; }
+.rtc-meta { font-size:.78rem; color:var(--text3); display:flex; gap:.75rem; flex-wrap:wrap; }
+.rtc-dot { width:8px; height:8px; border-radius:50%; background:var(--blue); display:inline-block; margin-right:.35rem; }
+
+/* Expanded roster detail */
+.roster-detail { background:var(--bg2); border:1px solid var(--border); border-radius:var(--radius); overflow:hidden; }
+.roster-detail-hdr {
+  padding:1rem 1.5rem; border-bottom:1px solid var(--border);
+  display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:.75rem;
+}
+.roster-detail-hdr h3 { font-size:1rem; font-weight:500; }
+
+/* Date range filter */
+.roster-range { display:flex; align-items:center; gap:.6rem; flex-wrap:wrap; }
+.roster-range label { font-size:.75rem; color:var(--text3); text-transform:uppercase; letter-spacing:.04em; }
+.roster-range input {
+  background:var(--bg3); border:1px solid var(--border2); border-radius:5px;
+  color:var(--text); padding:.35rem .7rem; font-size:.82rem; outline:none;
+  font-family:'DM Sans',sans-serif;
+}
+.roster-range input:focus { border-color:var(--accent); }
+
+/* Day rows */
+.roster-day-row { border-bottom:1px solid var(--border); }
+.roster-day-row:last-child { border-bottom:none; }
+.roster-day-hdr {
+  padding:.7rem 1.5rem; display:flex; justify-content:space-between; align-items:center;
+  cursor:pointer; transition:background .15s;
+}
+.roster-day-hdr:hover { background:var(--bg3); }
+.roster-day-date { font-size:.85rem; font-weight:500; }
+.roster-day-date.has-gap { color:var(--green); }
+.roster-day-summary { font-size:.78rem; color:var(--text3); display:flex; gap:.75rem; }
+
+/* Slot timeline */
+.roster-slots { padding:.5rem 1.5rem 1rem; display:flex; flex-direction:column; gap:.35rem; }
+.roster-slot {
+  display:flex; align-items:center; gap:.75rem; padding:.5rem .85rem;
+  border-radius:5px; border:1px solid; font-size:.82rem;
+}
+.roster-slot.booked {
+  background:rgba(59,130,246,.06); border-color:rgba(59,130,246,.25);
+}
+.roster-slot.booked.attended  { background:rgba(34,197,94,.06);  border-color:rgba(34,197,94,.25);  }
+.roster-slot.booked.missed    { background:rgba(239,68,68,.06);  border-color:rgba(239,68,68,.25);  }
+.roster-slot.booked.cancelled { background:rgba(245,158,11,.06); border-color:rgba(245,158,11,.25); }
+.roster-slot.gap {
+  background:rgba(34,197,94,.04); border-color:rgba(34,197,94,.2);
+  border-style:dashed;
+}
+.slot-time { font-family:'DM Mono',monospace; font-size:.8rem; color:var(--text2); width:120px; flex-shrink:0; }
+.slot-student { flex:1; color:var(--text); }
+.slot-gap-label { flex:1; color:var(--green); font-style:italic; }
+.slot-dur { font-size:.75rem; color:var(--text3); }
+.slot-instrument { font-size:.75rem; color:var(--text3); }
+
+/* No-session day */
+.roster-free-day {
+  margin:.5rem 1.5rem 1rem; padding:.6rem 1rem;
+  background:rgba(34,197,94,.05); border:1px dashed rgba(34,197,94,.3);
+  border-radius:5px; font-size:.82rem; color:var(--green);
+}
+
+/* ══════════════════════════════════
+   ADMIN DAY VIEW (accordion)
+══════════════════════════════════ */
+.day-view-wrap { background:var(--bg2); border:1px solid var(--border); border-radius:var(--radius); margin-bottom:1.5rem; overflow:hidden; }
+.day-view-hdr { padding:1rem 1.5rem; display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid var(--border); }
+.day-view-hdr h3 { font-size:.95rem; font-weight:500; }
+.tutor-accordion { border-bottom:1px solid var(--border); }
+.tutor-accordion:last-child { border-bottom:none; }
+.tutor-acc-hdr { padding:.85rem 1.5rem; display:flex; justify-content:space-between; align-items:center; cursor:pointer; transition:background .2s; }
+.tutor-acc-hdr:hover { background:var(--bg3); }
+.tutor-acc-hdr-left { display:flex; align-items:center; gap:.75rem; }
+.tutor-name { font-size:.9rem; font-weight:500; }
+.tutor-session-count { font-size:.75rem; color:var(--text3); }
+.tutor-acc-body { padding:0 1.5rem 1rem; display:flex; flex-direction:column; gap:.5rem; }
+.admin-session-row {
+  background:var(--bg3); border:1px solid var(--border); border-radius:6px;
+  padding:.75rem 1rem; display:flex; align-items:center; gap:1rem; flex-wrap:wrap; cursor:pointer; transition:border-color .2s;
+}
+.admin-session-row:hover { border-color:var(--border2); }
+.asr-date { font-family:'DM Mono',monospace; font-size:.82rem; color:var(--text2); width:90px; flex-shrink:0; }
+.asr-time { font-family:'DM Mono',monospace; font-size:.82rem; color:var(--text2); width:120px; flex-shrink:0; }
+.asr-student { font-size:.88rem; font-weight:500; flex:1; }
+.asr-instrument { font-size:.8rem; color:var(--text3); }
+.asr-payroll { display:flex; gap:.4rem; align-items:center; margin-left:auto; }
+.pay-check { width:14px; height:14px; border-radius:3px; border:1px solid var(--border2); background:transparent; cursor:pointer; appearance:none; flex-shrink:0; }
+.pay-check:checked { background:var(--green); border-color:var(--green); }
+.pay-label { font-size:.75rem; color:var(--text3); }
+
+/* ══════════════════════════════════
+   CSV EXPORT
+══════════════════════════════════ */
+.export-bar { display:flex; justify-content:flex-end; margin-bottom:1.25rem; }
+
+/* ══════════════════════════════════
+   TASK ITEMS
+══════════════════════════════════ */
+.task-item { border:1px solid var(--border); border-radius:6px; padding:1.25rem; margin-bottom:.75rem; transition:border-color .2s; }
+.task-item:hover { border-color:var(--border2); }
+.task-title { font-weight:500; margin-bottom:.35rem; }
+.task-desc { color:var(--text3); font-size:.875rem; margin-bottom:.6rem; }
+
+/* ══════════════════════════════════
+   RESPONSIVE
+══════════════════════════════════ */
+@media(max-width:768px){
+  .landing-hero h1 { font-size:2rem; }
+  .dashboard { padding:1rem; }
+  .stats-grid { grid-template-columns:1fr 1fr; }
+  .cal-cell { min-height:42px; }
+  .session-panel { width:100vw; }
+}
+</style>
+</head>
+<body>
+<div id="root"></div>
+<script type="text/babel">
+const { useState, useEffect, useRef, useCallback } = React;
+
+/* ══════════════════════════════════════════════════
+   SUPABASE CONNECTION
+══════════════════════════════════════════════════ */
+const SUPABASE_URL = 'https://oozejvfuwqomgnwbvwtv.supabase.co';
+const SUPABASE_KEY = 'sb_publishable_jDf8JYx601zpvomoU1ff6w_YimqGuS_';
+const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+const TODAY = '2026-02-17';
+
+// Global USERS array - populated from database
+let USERS = [];
+
+// TASKS array - hardcoded for now (will be from database later)
+const TASKS = [
+  {id:1, studentId:11, title:"Practice Guitar Scales", description:"Daily 10 min – focus on finger position and timing", dueDate:"2026-02-28", status:"in-progress"},
+  {id:2, studentId:12, title:"Learn New Piece", description:"Work through bars 1–16, right hand only first", dueDate:"2026-02-28", status:"pending"},
+  {id:3, studentId:13, title:"Rhythm Exercise", description:"Clap pattern before playing, use metronome", dueDate:"2026-02-28", status:"in-progress"},
+  {id:4, studentId:14, title:"Theory Worksheet", description:"Complete major/minor key exercises", dueDate:"2026-02-28", status:"pending"},
+  {id:5, studentId:15, title:"Performance Prep", description:"Run through full piece 3× daily", dueDate:"2026-02-28", status:"completed"},
+  {id:6, studentId:16, title:"Practice Drums Scales", description:"Daily 10 min – focus on finger position and timing", dueDate:"2026-02-28", status:"in-progress"},
+  {id:7, studentId:17, title:"Learn New Piece", description:"Work through bars 1–16, right hand only first", dueDate:"2026-02-28", status:"pending"},
+  {id:8, studentId:18, title:"Rhythm Exercise", description:"Clap pattern before playing, use metronome", dueDate:"2026-02-28", status:"in-progress"},
+  {id:9, studentId:19, title:"Theory Worksheet", description:"Complete major/minor key exercises", dueDate:"2026-02-28", status:"pending"},
+  {id:10, studentId:20, title:"Performance Prep", description:"Run through full piece 3× daily", dueDate:"2026-02-28", status:"completed"},
+];
+
+/* ══════════════════════════════════════════════════
+   MM LOGO SVG
+══════════════════════════════════════════════════ */
+function MMLogo({ height=46, small=false, wordmark=true }) {
+  const h = small ? 32 : height;
+  return (
+    <div className="logo-wrap">
+      <svg viewBox="0 0 120 80" style={{height:h,width:'auto'}} xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <linearGradient id="g1" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%"   stopColor="#9aaaba"/>
+            <stop offset="100%" stopColor="#6b7a8d"/>
+          </linearGradient>
+          <linearGradient id="g2" x1="100%" y1="0%" x2="0%" y2="100%">
+            <stop offset="0%"   stopColor="#7a8fa5"/>
+            <stop offset="100%" stopColor="#536070"/>
+          </linearGradient>
+        </defs>
+        <polygon points="0,70 0,10 15,10 30,42 45,10 60,10 60,70 46,70 46,34 30,62 14,34 14,70" fill="url(#g1)"/>
+        <polygon points="60,70 60,10 75,10 90,42 105,10 120,10 120,70 106,70 106,34 90,62 74,34 74,70" fill="url(#g2)" opacity=".9"/>
+      </svg>
+      {wordmark && <span className="logo-wordmark">Manly Music</span>}
+    </div>
+  );
+}
+
+const MONTHS = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+const WDAYS  = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+
+/* ══════════════════════════════════════════════════
+   HELPERS
+══════════════════════════════════════════════════ */
+function fmtDuration(s) { const m=Math.floor(s/60), sec=s%60; return `${m}:${String(sec).padStart(2,'0')}`; }
+function fmtDate(d) { const [y,mo,day]=d.split('-'); return `${day} ${MONTHS[parseInt(mo)-1]} ${y}`; }
+function fmtTime(t) { if(!t) return '—'; const [h,m]=t.split(':').map(Number); const ap=h>=12?'pm':'am'; return `${h===0?12:h>12?h-12:h}:${String(m).padStart(2,'0')}${ap}`; }
+function statusColor(s) { return s==='attended'?'#22c55e':s==='missed'?'#ef4444':s==='scheduled'?'#3b82f6':s==='cancelled'?'#f59e0b':'#4a5568'; }
+function statusClass(s) { return `badge badge-${s||'pending'}`; }
+
+function userName(id) { return USERS.find(u=>u.id===id)?.name || '—'; }
+
+/* ══════════════════════════════════════════════════
+   RECORDING COMPONENT
+══════════════════════════════════════════════════ */
+const MAX_REC_SECONDS = 120; // 2 min
+
+function RecordingSection({ session, canRecord, userRole, onSaveRecording }) {
+  const [isRecording, setIsRecording] = useState(false);
+  const [elapsed,     setElapsed]     = useState(0);
+  const timerRef = useRef(null);
+
+  useEffect(() => {
+    if (isRecording) {
+      timerRef.current = setInterval(() => {
+        setElapsed(p => {
+          if (p + 1 >= MAX_REC_SECONDS) { stopRecording(p+1); return p+1; }
+          return p + 1;
+        });
+      }, 1000);
+    }
+    return () => clearInterval(timerRef.current);
+  }, [isRecording]);
+
+  function startRecording() { setIsRecording(true); setElapsed(0); }
+  function stopRecording(dur) {
+    clearInterval(timerRef.current);
+    setIsRecording(false);
+    const actualDur = dur !== undefined ? dur : elapsed;
+    const label = userRole === 'student'
+      ? `Practice – ${session.instrument} ${new Date().toLocaleDateString('en-AU')}`
+      : `Session Note – ${fmtDate(session.date)}`;
+    onSaveRecording(session.id, { id:'r'+Date.now(), label, duration:actualDur, date:TODAY, role:userRole });
+    setElapsed(0);
+  }
+
+  const myRecs   = session.recordings.filter(r => r.role === userRole);
+  const theirRecs= session.recordings.filter(r => r.role !== userRole);
+
+  return (
+    <div className="rec-area">
+      {/* My recordings */}
+      {myRecs.map(r => (
+        <div key={r.id} className="rec-item">
+          <span className="rec-item-name">🎵 {r.label}</span>
+          <span style={{fontFamily:'DM Mono,monospace',fontSize:'.8rem',color:'var(--text3)'}}>{fmtDuration(r.duration)}</span>
+        </div>
+      ))}
+
+      {/* Other role recordings (read-only labels) */}
+      {theirRecs.length > 0 && (
+        <div style={{marginTop:'.25rem'}}>
+          <div style={{fontSize:'.72rem',color:'var(--text3)',marginBottom:'.4rem',textTransform:'uppercase',letterSpacing:'.06em'}}>
+            {userRole === 'student' ? 'Tutor recordings' : 'Student recordings'}
+          </div>
+          {theirRecs.map(r => (
+            <div key={r.id} className="rec-item" style={{opacity:.7}}>
+              <span className="rec-item-name">🎵 {r.label}</span>
+              <span style={{fontFamily:'DM Mono,monospace',fontSize:'.8rem',color:'var(--text3)'}}>{fmtDuration(r.duration)}</span>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* Record controls */}
+      {canRecord && !isRecording && (
+        <button className="btn btn-sm" style={{alignSelf:'flex-start'}} onClick={startRecording}>
+          ● Record {userRole==='student'?'Practice':'Session Note'} (max 2 min)
+        </button>
+      )}
+      {canRecord && isRecording && (
+        <div style={{display:'flex',alignItems:'center',gap:'1rem',background:'var(--bg3)',border:'1px solid var(--border)',borderRadius:6,padding:'.75rem 1rem'}}>
+          <span className="rec-pulse"></span>
+          <span className="rec-timer">{fmtDuration(elapsed)}</span>
+          <span style={{fontSize:'.8rem',color:'var(--text3)'}}>/ 2:00 max</span>
+          <button className="btn btn-sm btn-red" style={{marginLeft:'auto'}} onClick={() => stopRecording()}>⏹ Stop & Save</button>
+        </div>
+      )}
+    </div>
+  );
+}
+
+/* ══════════════════════════════════════════════════
+   STAR RATING COMPONENT
+══════════════════════════════════════════════════ */
+function StarRating({ rating, onChange, readOnly }) {
+  const [hoverRating, setHoverRating] = useState(0);
+  
+  return (
+    <div style={{display: 'flex', gap: '0.25rem'}}>
+      {[1, 2, 3, 4, 5].map(star => {
+        const filled = star <= (hoverRating || rating);
+        return (
+          <div
+            key={star}
+            onClick={() => !readOnly && onChange(star)}
+            onMouseEnter={() => !readOnly && setHoverRating(star)}
+            onMouseLeave={() => !readOnly && setHoverRating(0)}
+            style={{
+              fontSize: '1.5rem',
+              color: filled ? '#FFB800' : '#3a3a3a',
+              cursor: readOnly ? 'default' : 'pointer',
+              transition: 'color 0.2s, transform 0.1s',
+              userSelect: 'none'
+            }}
+            onMouseDown={e => !readOnly && (e.currentTarget.style.transform = 'scale(0.9)')}
+            onMouseUp={e => !readOnly && (e.currentTarget.style.transform = 'scale(1)')}
+          >
+            ★
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+/* ══════════════════════════════════════════════════
+   ASSESSMENT SECTION COMPONENT
+══════════════════════════════════════════════════ */
+function AssessmentSection({ session, userRole, onUpdateAssessment }) {
+  const [editing, setEditing] = useState(false);
+  const [ratings, setRatings] = useState({
+    technique: session.ratingTechnique || 0,
+    rhythm: session.ratingRhythm || 0,
+    tone: session.ratingTone || 0,
+    sightReading: session.ratingSightReading || 0,
+    expression: session.ratingExpression || 0,
+    focus: session.ratingFocus || 0
+  });
+  const [notes, setNotes] = useState(session.assessmentNotes || '');
+
+  const isTutorAdmin = userRole === 'tutor' || userRole === 'admin';
+  const hasAssessment = Object.values(ratings).some(r => r > 0);
+  
+  const categories = [
+    { key: 'technique', label: '🎵 Technique', icon: '🎵' },
+    { key: 'rhythm', label: '🎶 Rhythm/Timing', icon: '🎶' },
+    { key: 'tone', label: '🎼 Tone/Quality', icon: '🎼' },
+    { key: 'sightReading', label: '📖 Sight Reading', icon: '📖' },
+    { key: 'expression', label: '🎭 Expression', icon: '🎭' },
+    { key: 'focus', label: '🎯 Focus/Preparation', icon: '🎯' }
+  ];
+
+  const average = hasAssessment 
+    ? (Object.values(ratings).reduce((sum, r) => sum + r, 0) / Object.values(ratings).filter(r => r > 0).length).toFixed(1)
+    : null;
+
+  function handleSave() {
+    onUpdateAssessment(session.id, {
+      ratingTechnique: ratings.technique || null,
+      ratingRhythm: ratings.rhythm || null,
+      ratingTone: ratings.tone || null,
+      ratingSightReading: ratings.sightReading || null,
+      ratingExpression: ratings.expression || null,
+      ratingFocus: ratings.focus || null,
+      assessmentNotes: notes,
+      assessedAt: new Date().toISOString(),
+      assessedBy: null // Will be set on backend
+    });
+    setEditing(false);
+  }
+
+  function handleCancel() {
+    setRatings({
+      technique: session.ratingTechnique || 0,
+      rhythm: session.ratingRhythm || 0,
+      tone: session.ratingTone || 0,
+      sightReading: session.ratingSightReading || 0,
+      expression: session.ratingExpression || 0,
+      focus: session.ratingFocus || 0
+    });
+    setNotes(session.assessmentNotes || '');
+    setEditing(false);
+  }
+
+  return (
+    <div className="sp-section" style={{background: 'linear-gradient(135deg, var(--bg2) 0%, var(--bg3) 100%)', border: '2px solid var(--accent)'}}>
+      <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem'}}>
+        <div style={{display: 'flex', alignItems: 'center', gap: '1rem'}}>
+          <div className="sp-section-title" style={{margin: 0, fontSize: '.9rem'}}>
+            ⭐ SESSION ASSESSMENT
+          </div>
+          {average && !editing && (
+            <div style={{
+              background: '#FFB800',
+              color: '#000',
+              padding: '.3rem .75rem',
+              borderRadius: '20px',
+              fontSize: '.85rem',
+              fontWeight: 600
+            }}>
+              Average: {average} / 5.0
+            </div>
+          )}
+        </div>
+        {isTutorAdmin && !editing && (
+          <button className="btn btn-sm btn-primary" onClick={() => setEditing(true)}>
+            {hasAssessment ? 'Edit Assessment' : 'Add Assessment'}
+          </button>
+        )}
+      </div>
+
+      {!hasAssessment && !editing ? (
+        <div style={{
+          padding: '2rem',
+          textAlign: 'center',
+          color: 'var(--text3)',
+          fontSize: '.9rem'
+        }}>
+          {isTutorAdmin 
+            ? '📊 No assessment yet. Click "Add Assessment" to rate this session.' 
+            : '📊 Tutor has not added an assessment for this session yet.'}
+        </div>
+      ) : (
+        <div style={{display: 'flex', flexDirection: 'column', gap: '1rem'}}>
+          {/* Rating Grid */}
+          <div style={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
+            gap: '1rem'
+          }}>
+            {categories.map(cat => (
+              <div key={cat.key} style={{
+                background: 'var(--bg1)',
+                padding: '.75rem 1rem',
+                borderRadius: '8px',
+                border: '1px solid var(--border)'
+              }}>
+                <div style={{
+                  fontSize: '.85rem',
+                  fontWeight: 500,
+                  color: 'var(--text2)',
+                  marginBottom: '.5rem'
+                }}>
+                  {cat.label}
+                </div>
+                <StarRating
+                  rating={ratings[cat.key]}
+                  onChange={(value) => setRatings({...ratings, [cat.key]: value})}
+                  readOnly={!editing}
+                />
+              </div>
+            ))}
+          </div>
+
+          {/* Assessment Notes */}
+          <div>
+            <div style={{fontSize: '.85rem', fontWeight: 500, color: 'var(--text2)', marginBottom: '.5rem'}}>
+              Assessment Notes
+            </div>
+            {editing ? (
+              <textarea
+                value={notes}
+                onChange={e => setNotes(e.target.value)}
+                placeholder="Add detailed feedback about the student's performance..."
+                style={{
+                  width: '100%',
+                  background: 'var(--bg1)',
+                  border: '1px solid var(--border2)',
+                  borderRadius: '6px',
+                  color: 'var(--text)',
+                  padding: '1rem',
+                  minHeight: '100px',
+                  fontSize: '.92rem',
+                  resize: 'vertical'
+                }}
+              />
+            ) : (
+              <div style={{
+                background: 'var(--bg1)',
+                padding: '1rem',
+                borderRadius: '6px',
+                border: '1px solid var(--border)',
+                fontSize: '.92rem',
+                color: 'var(--text2)',
+                minHeight: '60px'
+              }}>
+                {notes || <span style={{fontStyle: 'italic', color: 'var(--text3)'}}>No notes added</span>}
+              </div>
+            )}
+          </div>
+
+          {/* Action Buttons */}
+          {editing && (
+            <div style={{display: 'flex', gap: '.5rem', justifyContent: 'flex-end'}}>
+              <button className="btn btn-sm" onClick={handleCancel}>Cancel</button>
+              <button className="btn btn-sm btn-primary" onClick={handleSave}>Save Assessment</button>
+            </div>
+          )}
+
+          {/* Timestamp */}
+          {session.assessedAt && !editing && (
+            <div style={{fontSize: '.75rem', color: 'var(--text3)', textAlign: 'right'}}>
+              Last assessed: {new Date(session.assessedAt).toLocaleString('en-AU')}
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
+/* ══════════════════════════════════════════════════
+   SESSION DETAIL PANEL
+══════════════════════════════════════════════════ */
+function SessionPanel({ session, userRole, currentUserId, onClose, onSaveRecording, onUpdateSession, onMarkStatus, onSendReminder }) {
+  const [editingTutorComment,   setEditTC]    = useState(false);
+  const [editingStudentComment, setEditSC]    = useState(false);
+  const [tutorComment,  setTutorComment]      = useState(session.tutorComments);
+  const [studentComment,setStudentComment]    = useState(session.studentComments);
+  const [editingSummary, setEditSummary]      = useState(false);
+  const [summary, setSummary]                 = useState(session.plannedSummary);
+  const [sendingReminder, setSendingReminder] = useState(false);
+
+  const isCompleted  = session.status === 'attended';
+  const isScheduled  = session.status === 'scheduled';
+  const isTutorAdmin = userRole === 'tutor' || userRole === 'admin';
+  const isStudent    = userRole === 'student';
+  const isParent     = userRole === 'parent';
+
+  const student = USERS.find(u => u.id === session.studentId);
+  const tutor   = USERS.find(u => u.id === session.tutorId);
+
+  function saveTutorComment() {
+    onUpdateSession(session.id, { tutorComments: tutorComment });
+    setEditTC(false);
+  }
+  function saveStudentComment() {
+    onUpdateSession(session.id, { studentComments: studentComment });
+    setEditSC(false);
+  }
+  function saveSummary() {
+    onUpdateSession(session.id, { plannedSummary: summary });
+    setEditSummary(false);
+  }
+
+  return (
+    <>
+      <div className="session-panel-overlay" onClick={onClose}/>
+      <div className="session-panel">
+        <div className="sp-hdr">
+          <div>
+            <h3>{fmtDate(session.date)}</h3>
+            <div style={{marginTop:'.3rem',display:'flex',gap:'.5rem',alignItems:'center',flexWrap:'wrap'}}>
+              <span className={statusClass(session.status)}>{session.status}</span>
+              <span style={{fontSize:'.82rem',color:'var(--text3)'}}>{fmtTime(session.startTime)} – {fmtTime(session.endTime)}</span>
+              <span style={{fontSize:'.82rem',color:'var(--text3)'}}>{session.durationMin} min</span>
+            </div>
+          </div>
+          <button className="btn btn-sm" onClick={onClose}>✕</button>
+        </div>
+
+        <div className="sp-body">
+
+          {/* ── Session Info ── */}
+          <div className="sp-section">
+            <div className="sp-section-title">Session Details</div>
+            <div className="sp-row"><span className="sp-lbl">Student</span><span className="sp-val">{student?.name}</span></div>
+            <div className="sp-row"><span className="sp-lbl">Tutor</span><span className="sp-val">{tutor?.name}</span></div>
+            <div className="sp-row"><span className="sp-lbl">Instrument</span><span className="sp-val">{session.instrument}</span></div>
+            {session.accompaniment && <div className="sp-row"><span className="sp-lbl">Accompaniment</span><span className="sp-val">{session.accompaniment}</span></div>}
+          </div>
+
+          {/* ── Assessment Section (PROMINENT) ── */}
+          {(isCompleted || (isTutorAdmin && isScheduled)) && (
+            <AssessmentSection
+              session={session}
+              userRole={userRole}
+              onUpdateAssessment={onUpdateSession}
+            />
+          )}
+
+          {/* ── Session Summary (scheduled & completed) ── */}
+          <div className="sp-section">
+            <div className="sp-section-title" style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:'.6rem'}}>
+              {isCompleted ? 'Session Summary' : 'Planned Session'}
+              {isTutorAdmin && !editingSummary && (
+                <button className="btn btn-sm" onClick={() => setEditSummary(true)}>Edit</button>
+              )}
+            </div>
+            {editingSummary ? (
+              <div>
+                <textarea className="field" style={{width:'100%',background:'var(--bg3)',border:'1px solid var(--border2)',borderRadius:6,color:'var(--text)',padding:'1rem',minHeight:120,fontSize:'.92rem'}}
+                  value={summary} onChange={e=>setSummary(e.target.value)}/>
+                <div style={{display:'flex',gap:'.5rem',marginTop:'.5rem'}}>
+                  <button className="btn btn-sm btn-primary" onClick={saveSummary}>Save</button>
+                  <button className="btn btn-sm" onClick={()=>{setSummary(session.plannedSummary);setEditSummary(false);}}>Cancel</button>
+                </div>
+              </div>
+            ) : (
+              <p className="sp-comment">{session.plannedSummary || <span className="sp-empty">No summary entered yet.</span>}</p>
+            )}
+          </div>
+
+          {/* ── Tutor Comments (completed only) ── */}
+          {isCompleted && (
+            <div className="sp-section">
+              <div className="sp-section-title" style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:'.6rem'}}>
+                Tutor Comments
+                {isTutorAdmin && !editingTutorComment && (
+                  <button className="btn btn-sm" onClick={()=>setEditTC(true)}>Edit</button>
+                )}
+              </div>
+              {editingTutorComment ? (
+                <div>
+                  <textarea style={{width:'100%',background:'var(--bg3)',border:'1px solid var(--border2)',borderRadius:6,color:'var(--text)',padding:'1rem',minHeight:120,fontSize:'.92rem',resize:'vertical'}}
+                    value={tutorComment} onChange={e=>setTutorComment(e.target.value)}/>
+                  <div style={{display:'flex',gap:'.5rem',marginTop:'.5rem'}}>
+                    <button className="btn btn-sm btn-primary" onClick={saveTutorComment}>Save</button>
+                    <button className="btn btn-sm" onClick={()=>{setTutorComment(session.tutorComments);setEditTC(false);}}>Cancel</button>
+                  </div>
+                </div>
+              ) : (
+                <p className="sp-comment">{session.tutorComments || <span className="sp-empty">No comments yet.</span>}</p>
+              )}
+            </div>
+          )}
+
+          {/* ── Student Comments (scheduled & completed) ── */}
+          {(isScheduled || isCompleted) && (
+            <div className="sp-section">
+              <div className="sp-section-title" style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:'.6rem'}}>
+                {isScheduled ? 'Practice Notes' : 'Student Comments'}
+                {(isStudent || isTutorAdmin) && !editingStudentComment && (
+                  <button className="btn btn-sm" onClick={()=>setEditSC(true)}>Edit</button>
+                )}
+              </div>
+              {editingStudentComment ? (
+                <div>
+                  <textarea style={{width:'100%',background:'var(--bg3)',border:'1px solid var(--border2)',borderRadius:6,color:'var(--text)',padding:'1rem',minHeight:120,fontSize:'.92rem',resize:'vertical'}}
+                    value={studentComment} onChange={e=>setStudentComment(e.target.value)}
+                    placeholder={isScheduled ? "Add practice notes before your lesson..." : "Add your thoughts about this lesson..."}
+                  />
+                  <div style={{display:'flex',gap:'.5rem',marginTop:'.5rem'}}>
+                    <button className="btn btn-sm btn-primary" onClick={saveStudentComment}>Save</button>
+                    <button className="btn btn-sm" onClick={()=>{setStudentComment(session.studentComments);setEditSC(false);}}>Cancel</button>
+                  </div>
+                </div>
+              ) : (
+                <p className="sp-comment">{session.studentComments || <span className="sp-empty">{isScheduled ? 'No practice notes yet.' : 'No student comments yet.'}</span>}</p>
+              )}
+            </div>
+          )}
+
+          {/* ── Recordings ── */}
+          <div className="sp-section">
+            <div className="sp-section-title" style={{marginBottom:'.75rem'}}>
+              {isCompleted ? 'Session Recordings' : 'Practice Recordings (Homework)'}
+            </div>
+            <RecordingSection
+              session={session}
+              canRecord={!isParent}
+              userRole={userRole}
+              onSaveRecording={onSaveRecording}
+            />
+          </div>
+
+          {/* ── Status controls (tutor/admin, upcoming) ── */}
+          {isTutorAdmin && (
+            <div className="sp-section">
+              <div className="sp-section-title" style={{marginBottom:'.75rem'}}>Mark Attendance</div>
+              <div style={{display:'flex',gap:'.5rem',flexWrap:'wrap'}}>
+                {['attended','missed','scheduled','cancelled'].map(s => (
+                  <button key={s} className={`btn btn-sm btn-${s==='attended'?'green':s==='missed'?'red':s==='scheduled'?'blue':'amber'}`}
+                    style={{opacity:session.status===s?.8:1}}
+                    onClick={() => onMarkStatus(session.id, s)}>
+                    {s.charAt(0).toUpperCase()+s.slice(1)}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* ── Send Reminder SMS (tutor/admin, scheduled only) ── */}
+          {isTutorAdmin && isScheduled && onSendReminder && (
+            <div className="sp-section">
+              <div className="sp-section-title" style={{marginBottom:'.75rem'}}>SMS Reminder</div>
+              <button 
+                className="btn btn-sm btn-primary" 
+                onClick={async () => {
+                  setSendingReminder(true);
+                  await onSendReminder(session);
+                  setSendingReminder(false);
+                }}
+                disabled={sendingReminder}
+                style={{opacity: sendingReminder ? 0.6 : 1}}
+              >
+                {sendingReminder ? '📤 Sending...' : '📱 Send Reminder SMS'}
+              </button>
+              <p style={{fontSize:'.82rem',color:'var(--text3)',marginTop:'.5rem'}}>
+                Sends "Your lesson starts in 2 hours" reminder to student/parent
+              </p>
+            </div>
+          )}
+
+        </div>
+      </div>
+    </>
+  );
+}
+
+/* ══════════════════════════════════════════════════
+   CALENDAR COMPONENT
+══════════════════════════════════════════════════ */
+function AttendanceCalendar({ sessions, userRole, currentUserId, filterStudentIds, onSelectSession }) {
+  const todayDate = new Date(2026, 1, 17);
+  const [date, setDate] = useState(new Date(2026, 1, 1));
+  const [flyoutDate, setFlyoutDate] = useState(null); // Track which day's flyout is open
+
+  const year = date.getFullYear(), month = date.getMonth();
+  
+  // Close flyout on ESC key
+  useEffect(() => {
+    function handleEscape(e) {
+      if (e.key === 'Escape' && flyoutDate) {
+        closeFlyout();
+      }
+    }
+    window.addEventListener('keydown', handleEscape);
+    return () => window.removeEventListener('keydown', handleEscape);
+  }, [flyoutDate]);
+
+  // build day → sessions map
+  const dayMap = {};
+  sessions.forEach(s => {
+    if (!dayMap[s.date]) dayMap[s.date] = [];
+    dayMap[s.date].push(s);
+  });
+
+  // dominant status for cell
+  function dominant(recs) {
+    if (recs.some(r=>r.status==='attended'))  return 'attended';
+    if (recs.some(r=>r.status==='missed'))    return 'missed';
+    if (recs.some(r=>r.status==='cancelled')) return 'cancelled';
+    if (recs.some(r=>r.status==='scheduled')) return 'scheduled';
+    return null;
+  }
+
+  function handleDayClick(recs, dateStr, event) {
+    if (recs.length === 0) return;
+    
+    // If flyout is currently open, close it and don't open anything else
+    // User needs to click again to open the session
+    if (flyoutDate) {
+      closeFlyout();
+      return;
+    }
+    
+    if (recs.length === 1) {
+      // Single session - open directly
+      onSelectSession(recs[0]);
+    } else {
+      // Multiple sessions - show flyout in top-right
+      setFlyoutDate(dateStr);
+    }
+  }
+
+  function closeFlyout() {
+    setFlyoutDate(null);
+  }
+
+  const firstDay    = new Date(year, month, 1).getDay();
+  const daysInMonth = new Date(year, month+1, 0).getDate();
+
+  // stats
+  const monthSessions = sessions.filter(s => {
+    const [y,m] = s.date.split('-').map(Number);
+    return y===year && m-1===month;
+  });
+  const att  = monthSessions.filter(s=>s.status==='attended').length;
+  const miss = monthSessions.filter(s=>s.status==='missed').length;
+  const sch  = monthSessions.filter(s=>s.status==='scheduled').length;
+  const can  = monthSessions.filter(s=>s.status==='cancelled').length;
+  const total = att + miss;
+  const rate  = total > 0 ? Math.round(att/total*100) : null;
+
+  const cells = [];
+  for (let i=0; i<firstDay; i++) cells.push({type:'blank',key:'b'+i});
+  for (let d=1; d<=daysInMonth; d++) {
+    const dateStr = `${year}-${String(month+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+    const recs    = dayMap[dateStr] || [];
+    const dom     = dominant(recs);
+    const isToday = dateStr === TODAY;
+    cells.push({ type:'day', key:dateStr, day:d, dateStr, recs, dom, isToday });
+  }
+
+  const flyoutSessions = flyoutDate ? (dayMap[flyoutDate] || []) : [];
+
+  return (
+    <div className="cal-wrap">
+      <div className="cal-toolbar">
+        <div className="cal-nav">
+          <button className="cal-nav-btn" onClick={()=>setDate(new Date(year,month-1,1))}>‹</button>
+          <div className="cal-month">{MONTHS[month]} {year}</div>
+          <button className="cal-nav-btn" onClick={()=>setDate(new Date(year,month+1,1))}>›</button>
+        </div>
+        <div className="cal-stats">
+          {att  > 0 && <div className="cal-stat"><div className="dot dot-green"/><b>{att}</b> attended</div>}
+          {miss > 0 && <div className="cal-stat"><div className="dot dot-red"/><b>{miss}</b> missed</div>}
+          {sch  > 0 && <div className="cal-stat"><div className="dot dot-blue"/><b>{sch}</b> upcoming</div>}
+          {can  > 0 && <div className="cal-stat"><div className="dot dot-amber"/><b>{can}</b> cancelled</div>}
+          {rate !== null && (
+            <div className={`rate-pill${rate>=80?'':rate>=60?' rate-ok':' rate-poor'}`}>
+              Attendance <b>{rate}%</b>
+            </div>
+          )}
+        </div>
+      </div>
+
+      <div className="cal-grid">
+        {WDAYS.map(d=><div key={d} className="cal-day-hdr">{d}</div>)}
+        {cells.map(cell => {
+          if (cell.type==='blank') return <div key={cell.key} className="cal-cell other-month"/>;
+          const { key, day, recs, dom, isToday, dateStr } = cell;
+          let cls = 'cal-cell';
+          if (dom) cls += ` has-${dom}`;
+          if (isToday) cls += ' today';
+
+          return (
+            <div key={key} className={cls} onClick={(e) => handleDayClick(recs, dateStr, e)}>
+              <div className="cal-day-num">{day}</div>
+              {recs.length > 0 && (
+                <div className="cal-pips">
+                  {recs.slice(0,6).map((r,i) => (
+                    <div key={i} className="cal-pip" style={{background:statusColor(r.status)}}/>
+                  ))}
+                </div>
+              )}
+            </div>
+          );
+        })}
+      </div>
+
+      {/* Flyout Menu for Multiple Sessions */}
+      {flyoutDate && flyoutSessions.length > 1 && (
+        <>
+          {/* Backdrop overlay */}
+          <div 
+            style={{
+              position: 'fixed',
+              top: 0,
+              left: 0,
+              right: 0,
+              bottom: 0,
+              background: 'rgba(0, 0, 0, 0.5)',
+              zIndex: 100
+            }}
+            onClick={closeFlyout}
+          />
+          {/* Flyout content */}
+          <div
+            style={{
+              position: 'fixed',
+              right: '2rem',
+              top: '6rem',
+              background: 'var(--bg1)',
+              border: '2px solid var(--accent)',
+              borderRadius: '8px',
+              boxShadow: '0 4px 20px rgba(0,0,0,0.3)',
+              padding: '0',
+              zIndex: 101,
+              minWidth: '320px',
+              maxWidth: '450px',
+              maxHeight: 'calc(100vh - 8rem)',
+              overflowY: 'auto'
+            }}
+            onClick={e => e.stopPropagation()}
+          >
+            {/* Header with close button */}
+            <div style={{
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              fontSize: '.85rem',
+              fontWeight: 600,
+              color: 'var(--text2)',
+              padding: '.75rem 1rem',
+              borderBottom: '1px solid var(--border)',
+              position: 'sticky',
+              top: 0,
+              background: 'var(--bg1)',
+              zIndex: 1
+            }}>
+              <span>{fmtDate(flyoutDate)} — {flyoutSessions.length} Sessions</span>
+              <button 
+                onClick={closeFlyout}
+                style={{
+                  background: 'none',
+                  border: 'none',
+                  color: 'var(--text2)',
+                  fontSize: '1.2rem',
+                  cursor: 'pointer',
+                  padding: '0',
+                  width: '24px',
+                  height: '24px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  borderRadius: '4px',
+                  transition: 'background 0.2s'
+                }}
+                onMouseEnter={e => e.currentTarget.style.background = 'var(--bg3)'}
+                onMouseLeave={e => e.currentTarget.style.background = 'none'}
+                title="Close (ESC or click outside)"
+              >
+                ✕
+              </button>
+            </div>
+            {flyoutSessions.sort((a,b) => a.startTime.localeCompare(b.startTime)).map((session, idx) => {
+              const student = USERS.find(u => u.id === session.studentId);
+              const tutor = USERS.find(u => u.id === session.tutorId);
+              
+              return (
+                <div
+                  key={session.id}
+                  style={{
+                    padding: '.75rem',
+                    cursor: 'pointer',
+                    borderBottom: idx < flyoutSessions.length - 1 ? '1px solid var(--border)' : 'none',
+                    transition: 'background 0.2s'
+                  }}
+                  onMouseEnter={e => e.currentTarget.style.background = 'var(--bg2)'}
+                  onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
+                  onClick={() => {
+                    onSelectSession(session);
+                    closeFlyout();
+                  }}
+                >
+                  <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '.3rem'}}>
+                    <span style={{fontSize: '.9rem', fontWeight: 500, color: 'var(--text)'}}>
+                      {fmtTime(session.startTime)} - {fmtTime(session.endTime)}
+                    </span>
+                    <span className={statusClass(session.status)}>{session.status}</span>
+                  </div>
+                  <div style={{fontSize: '.85rem', color: 'var(--text2)'}}>
+                    {student?.name} • {session.instrument} • {tutor?.name}
+                  </div>
+                </div>
+              );
+            })}
+            {/* Hint text */}
+            <div style={{
+              padding: '.5rem .75rem',
+              fontSize: '.75rem',
+              color: 'var(--text3)',
+              textAlign: 'center',
+              borderTop: '1px solid var(--border)',
+              background: 'var(--bg2)'
+            }}>
+              Click session to view details • ESC or click outside to close
+            </div>
+          </div>
+        </>
+      )}
+    </div>
+  );
+}
+
+/* ══════════════════════════════════════════════════
+   SCHEDULE SESSION MODAL (tutor / admin)
+══════════════════════════════════════════════════ */
+function ScheduleModal({ onClose, onSave, currentUserId, userRole, sessions }) {
+  const students = USERS.filter(u=>u.role==='student');
+  const tutors   = USERS.filter(u=>u.role==='tutor');
+  const [form, setForm] = useState({
+    studentId: students[0]?.id || '',
+    tutorId:   userRole==='tutor' ? currentUserId : (tutors[0]?.id || ''),
+    date:      TODAY,
+    startTime: '09:00',
+    durationMin: 30,
+    instrument: 'Piano',
+    accompaniment: '',
+    plannedSummary: ''
+  });
+
+  function calcEnd(start, mins) {
+    if (!start) return '';
+    const [h,m] = start.split(':').map(Number);
+    const total = h*60+m+parseInt(mins);
+    return `${String(Math.floor(total/60)).padStart(2,'0')}:${String(total%60).padStart(2,'0')}`;
+  }
+
+  function handleSave() {
+    // Validate date+time is not in the past
+    const now = new Date();
+    const selectedDateTime = new Date(`${form.date}T${form.startTime}`);
+    
+    if (selectedDateTime < now) {
+      alert('Cannot book sessions in the past. Please select a future date and time.');
+      return;
+    }
+    
+    // Check for tutor time conflicts
+    const endTime = calcEnd(form.startTime, form.durationMin);
+    const conflict = sessions?.find(s => {
+      if (s.tutorId !== parseInt(form.tutorId)) return false;
+      if (s.date !== form.date) return false;
+      if (s.status === 'cancelled') return false;
+      
+      // Check if times overlap
+      const existingStart = s.startTime;
+      const existingEnd = s.endTime;
+      
+      // Overlap if: new starts before existing ends AND new ends after existing starts
+      const overlap = (form.startTime < existingEnd) && (endTime > existingStart);
+      return overlap;
+    });
+    
+    if (conflict) {
+      const conflictTutor = USERS.find(u => u.id === conflict.tutorId);
+      const conflictStudent = USERS.find(u => u.id === conflict.studentId);
+      alert(`⚠️ TIME CONFLICT!\n\n${conflictTutor?.name} already has a session with ${conflictStudent?.name} at ${fmtTime(conflict.startTime)} - ${fmtTime(conflict.endTime)} on this date.\n\nPlease choose a different time.`);
+      return;
+    }
+    
+    onSave({
+      id: 's'+Date.now(),
+      studentId: parseInt(form.studentId),
+      tutorId:   parseInt(form.tutorId),
+      date:      form.date,
+      startTime: form.startTime,
+      endTime,
+      durationMin: parseInt(form.durationMin),
+      instrument:    form.instrument,
+      accompaniment: form.accompaniment,
+      status: 'scheduled',
+      plannedSummary: form.plannedSummary,
+      tutorComments: '', studentComments: '',
+      recordings: [],
+      payrollTutorPaid:false, paymentReceived:false, invoiced:false
+    });
+    onClose();
+  }
+
+  const f = (field, val) => setForm(p=>({...p,[field]:val}));
+
+  return (
+    <div className="modal-overlay">
+      <div className="modal-box">
+        <div className="modal-hdr">
+          <h3>Schedule New Session</h3>
+          <button className="btn btn-sm" onClick={onClose}>✕</button>
+        </div>
+        <div className="modal-body">
+          <div className="field">
+            <label>Student</label>
+            <select value={form.studentId} onChange={e=>f('studentId',e.target.value)}>
+              {students.map(s=><option key={s.id} value={s.id}>{s.name}</option>)}
+            </select>
+          </div>
+          <div className="field">
+            <label>Tutor</label>
+            <select value={form.tutorId} onChange={e=>f('tutorId',e.target.value)} disabled={userRole==='tutor'}>
+              {tutors.map(t=><option key={t.id} value={t.id}>{t.name}</option>)}
+            </select>
+          </div>
+          <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:'1rem'}}>
+            <div className="field">
+              <label>Date</label>
+              <select value={form.date} onChange={e=>f('date',e.target.value)}>
+                {Array.from({length: 60}, (_, i) => {
+                  const d = new Date();
+                  d.setDate(d.getDate() + i);
+                  const dateStr = d.toISOString().split('T')[0];
+                  const display = d.toLocaleDateString('en-AU', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' });
+                  return <option key={dateStr} value={dateStr}>{display}</option>;
+                })}
+              </select>
+            </div>
+            <div className="field">
+              <label>Start Time</label>
+              <select value={form.startTime} onChange={e=>f('startTime',e.target.value)}>
+                {['08:00','08:30','09:00','09:30','10:00','10:30','11:00','11:30','12:00','12:30','13:00','13:30','14:00','14:30','15:00','15:30','16:00','16:30','17:00','17:30','18:00','18:30','19:00','19:30','20:00'].map(t => (
+                  <option key={t} value={t}>{t.replace(/^(\d+):(\d+)$/, (m,h,min) => {
+                    const hr = parseInt(h);
+                    return `${hr > 12 ? hr-12 : hr === 0 ? 12 : hr}:${min}${hr >= 12 ? 'pm' : 'am'}`;
+                  })}</option>
+                ))}
+              </select>
+            </div>
+          </div>
+          <div className="field">
+            <label>Duration</label>
+            <select value={form.durationMin} onChange={e=>f('durationMin',e.target.value)}>
+              <option value={30}>30 minutes</option>
+              <option value={45}>45 minutes</option>
+              <option value={60}>60 minutes</option>
+            </select>
+          </div>
+          <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:'1rem'}}>
+            <div className="field">
+              <label>Instrument</label>
+              <input value={form.instrument} onChange={e=>f('instrument',e.target.value)} placeholder="Piano, Guitar…"/>
+            </div>
+            <div className="field">
+              <label>Accompaniment</label>
+              <input value={form.accompaniment} onChange={e=>f('accompaniment',e.target.value)} placeholder="Bio backing, none…"/>
+            </div>
+          </div>
+          <div className="field">
+            <label>Planned Session Summary</label>
+            <textarea value={form.plannedSummary} onChange={e=>f('plannedSummary',e.target.value)} placeholder="What to expect, focus areas, materials to bring…"/>
+          </div>
+          <div style={{fontSize:'.8rem',color:'var(--text3)',marginTop:'-.5rem'}}>
+            End time: <strong style={{color:'var(--text2)'}}>{fmtTime(calcEnd(form.startTime,form.durationMin))}</strong>
+          </div>
+        </div>
+        <div className="modal-footer">
+          <button className="btn" onClick={onClose}>Cancel</button>
+          <button className="btn btn-primary" onClick={handleSave}>Schedule Session</button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ══════════════════════════════════════════════════
+   BROADCAST SMS MODAL
+══════════════════════════════════════════════════ */
+function BroadcastModal({ onClose, onSend }) {
+  const [message, setMessage] = useState('');
+  const [recipientType, setRecipientType] = useState('all_students'); // 'all_students' | 'all_parents' | 'all_users'
+  const [sending, setSending] = useState(false);
+  const [progress, setProgress] = useState({ current: 0, total: 0 });
+
+  // Calculate recipients
+  const students = USERS.filter(u => u.role === 'student');
+  const parents = USERS.filter(u => u.role === 'parent');
+  const allUsers = [...students, ...parents];
+  
+  const recipients = recipientType === 'all_students' ? students :
+                     recipientType === 'all_parents' ? parents : allUsers;
+  
+  const recipientsWithMobiles = recipients.filter(u => u.mobile);
+  
+  async function handleSend() {
+    if (!message.trim()) {
+      alert('Please enter a message');
+      return;
+    }
+    
+    if (!confirm(`Send SMS to ${recipientsWithMobiles.length} recipients?\n\nThis will use Twilio credits.`)) {
+      return;
+    }
+    
+    setSending(true);
+    setProgress({ current: 0, total: recipientsWithMobiles.length });
+    
+    const results = await onSend(message, recipientsWithMobiles, (current, total) => {
+      setProgress({ current, total });
+    });
+    
+    setSending(false);
+    
+    const successCount = results.filter(r => r.success).length;
+    const failCount = results.filter(r => !r.success).length;
+    
+    alert(`✓ Broadcast complete!\n\n✅ Sent: ${successCount}\n❌ Failed: ${failCount}\n\nCheck sms_log table for details.`);
+    onClose();
+  }
+
+  return (
+    <div className="modal-overlay">
+      <div className="modal-box" style={{maxWidth:'600px'}}>
+        <div className="modal-hdr">
+          <h3>📢 Broadcast SMS</h3>
+          <button className="btn btn-sm" onClick={onClose} disabled={sending}>✕</button>
+        </div>
+        <div className="modal-body">
+          <div className="field">
+            <label>Recipients</label>
+            <select value={recipientType} onChange={e=>setRecipientType(e.target.value)} disabled={sending}>
+              <option value="all_students">All Students ({students.filter(u=>u.mobile).length} with mobiles)</option>
+              <option value="all_parents">All Parents ({parents.filter(u=>u.mobile).length} with mobiles)</option>
+              <option value="all_users">All Students + Parents ({allUsers.filter(u=>u.mobile).length} with mobiles)</option>
+            </select>
+          </div>
+          
+          <div className="field">
+            <label>Message</label>
+            <textarea 
+              value={message} 
+              onChange={e=>setMessage(e.target.value)}
+              placeholder="Type your broadcast message here..."
+              disabled={sending}
+              style={{minHeight:'120px'}}
+            />
+            <div style={{fontSize:'.8rem',color:'var(--text3)',marginTop:'.3rem'}}>
+              {message.length} characters • Will send to {recipientsWithMobiles.length} recipients
+            </div>
+          </div>
+          
+          {recipientsWithMobiles.length < recipients.length && (
+            <div style={{padding:'.75rem',background:'var(--bg3)',border:'1px solid var(--border2)',borderRadius:'6px',fontSize:'.85rem',color:'var(--text3)'}}>
+              ⚠️ Note: {recipients.length - recipientsWithMobiles.length} {recipientType === 'all_students' ? 'students' : recipientType === 'all_parents' ? 'parents' : 'users'} have no mobile number and will be skipped.
+            </div>
+          )}
+          
+          {sending && (
+            <div style={{padding:'1rem',background:'var(--bg3)',border:'1px solid var(--border2)',borderRadius:'6px'}}>
+              <div style={{fontSize:'.9rem',color:'var(--text2)',marginBottom:'.5rem'}}>
+                📤 Sending... {progress.current} / {progress.total}
+              </div>
+              <div style={{background:'var(--bg2)',height:'8px',borderRadius:'4px',overflow:'hidden'}}>
+                <div style={{
+                  background:'var(--accent)',
+                  height:'100%',
+                  width:`${progress.total > 0 ? (progress.current / progress.total * 100) : 0}%`,
+                  transition:'width 0.3s ease'
+                }}/>
+              </div>
+            </div>
+          )}
+        </div>
+        <div className="modal-footer">
+          <button className="btn" onClick={onClose} disabled={sending}>Cancel</button>
+          <button className="btn btn-primary" onClick={handleSend} disabled={sending || !message.trim()}>
+            {sending ? '📤 Sending...' : '📢 Send Broadcast'}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ══════════════════════════════════════════════════
+   BROADCAST EMAIL MODAL
+══════════════════════════════════════════════════ */
+function BroadcastEmailModal({ onClose, adminEmail }) {
+  const [subject, setSubject] = useState('');
+  const [message, setMessage] = useState('');
+  const [recipientType, setRecipientType] = useState('all_students'); // 'all_students' | 'all_parents' | 'all_users'
+
+  // Calculate recipients
+  const students = USERS.filter(u => u.role === 'student');
+  const parents = USERS.filter(u => u.role === 'parent');
+  const allUsers = [...students, ...parents];
+  
+  const recipients = recipientType === 'all_students' ? students :
+                     recipientType === 'all_parents' ? parents : allUsers;
+  
+  const recipientsWithEmails = recipients.filter(u => u.email);
+  
+  function handleSend() {
+    if (!subject.trim() || !message.trim()) {
+      alert('Please enter both subject and message');
+      return;
+    }
+    
+    // Create mailto link: To = admin (for receipt), BCC = all recipients
+    const emailList = recipientsWithEmails.map(u => u.email).join(',');
+    const encodedSubject = encodeURIComponent(subject);
+    const encodedBody = encodeURIComponent(message);
+    
+    // Address to admin for receipt, BCC everyone else
+    const mailtoLink = `mailto:${adminEmail}?bcc=${emailList}&subject=${encodedSubject}&body=${encodedBody}`;
+    
+    window.location.href = mailtoLink;
+    
+    alert(`✓ Opening your email client.\n\nTo: You (${adminEmail})\nBCC: ${recipientsWithEmails.length} recipients\n\nYou'll receive a copy as confirmation that the broadcast was sent.`);
+    onClose();
+  }
+
+  return (
+    <div className="modal-overlay">
+      <div className="modal-box" style={{maxWidth:'600px'}}>
+        <div className="modal-hdr">
+          <h3>📧 Broadcast Email</h3>
+          <button className="btn btn-sm" onClick={onClose}>✕</button>
+        </div>
+        <div className="modal-body">
+          <div className="field">
+            <label>Recipients</label>
+            <select value={recipientType} onChange={e=>setRecipientType(e.target.value)}>
+              <option value="all_students">All Students ({students.filter(u=>u.email).length} with emails)</option>
+              <option value="all_parents">All Parents ({parents.filter(u=>u.email).length} with emails)</option>
+              <option value="all_users">All Students + Parents ({allUsers.filter(u=>u.email).length} with emails)</option>
+            </select>
+          </div>
+          
+          <div className="field">
+            <label>Subject</label>
+            <input 
+              type="text"
+              value={subject} 
+              onChange={e=>setSubject(e.target.value)}
+              placeholder="Email subject line..."
+            />
+          </div>
+          
+          <div className="field">
+            <label>Message</label>
+            <textarea 
+              value={message} 
+              onChange={e=>setMessage(e.target.value)}
+              placeholder="Type your email message here..."
+              style={{minHeight:'150px'}}
+            />
+            <div style={{fontSize:'.8rem',color:'var(--text3)',marginTop:'.3rem'}}>
+              {message.length} characters • Will email {recipientsWithEmails.length} recipients (BCC)
+            </div>
+          </div>
+          
+          {recipientsWithEmails.length < recipients.length && (
+            <div style={{padding:'.75rem',background:'var(--bg3)',border:'1px solid var(--border2)',borderRadius:'6px',fontSize:'.85rem',color:'var(--text3)'}}>
+              ⚠️ Note: {recipients.length - recipientsWithEmails.length} {recipientType === 'all_students' ? 'students' : recipientType === 'all_parents' ? 'parents' : 'users'} have no email address and will be skipped.
+            </div>
+          )}
+          
+          <div style={{padding:'.75rem',background:'var(--bg3)',border:'1px solid var(--accent)',borderRadius:'6px',fontSize:'.85rem',color:'var(--text2)'}}>
+            💡 <b>How it works:</b> The email will be addressed to YOU with all recipients in BCC (hidden). This way you get a copy as confirmation the broadcast was sent, and recipients' privacy is protected.
+          </div>
+        </div>
+        <div className="modal-footer">
+          <button className="btn" onClick={onClose}>Cancel</button>
+          <button className="btn btn-primary" onClick={handleSend} disabled={!subject.trim() || !message.trim()}>
+            📧 Open Email Client
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ══════════════════════════════════════════════════
+   ADMIN DAY VIEW (accordion by tutor)
+══════════════════════════════════════════════════ */
+function TutorRoster({ sessions, currentUserId, userRole }) {
+  const tutors = USERS.filter(u => u.role === 'tutor');
+  const visibleTutors = userRole === 'tutor'
+    ? tutors.filter(t => t.id === currentUserId)
+    : tutors;
+
+  const [selectedTutor, setSelectedTutor] = useState(
+    userRole === 'tutor' ? currentUserId : null
+  );
+  const [fromDate, setFromDate] = useState('2026-02-01');
+  const [toDate,   setToDate]   = useState('2026-02-28');
+  const [openDays, setOpenDays] = useState({});
+
+  function toggleDay(d) { setOpenDays(p => ({...p, [d]: p[d]===false ? true : false})); }
+
+  const tutorSessions = selectedTutor
+    ? sessions.filter(s =>
+        s.tutorId === selectedTutor &&
+        s.date >= fromDate &&
+        s.date <= toDate
+      ).sort((a,b) => a.date.localeCompare(b.date) || a.startTime.localeCompare(b.startTime))
+    : [];
+
+  const WORK_START = '08:30';
+  const WORK_END   = '17:00';
+
+  function timeToMins(t) { const [h,m] = t.split(':').map(Number); return h*60+m; }
+  function minsToTime(m) { return `${String(Math.floor(m/60)).padStart(2,'0')}:${String(m%60).padStart(2,'0')}`; }
+
+  function getDatesInRange(from, to) {
+    const dates = [];
+    let cur = new Date(from + 'T00:00:00');
+    const end = new Date(to + 'T00:00:00');
+    while (cur <= end) {
+      const wd = cur.getDay();
+      if (wd !== 0 && wd !== 6) dates.push(cur.toISOString().slice(0,10));
+      cur.setDate(cur.getDate() + 1);
+    }
+    return dates;
+  }
+
+  const allDates = getDatesInRange(fromDate, toDate);
+
+  function buildDaySlots(date) {
+    const daySessions = tutorSessions.filter(s => s.date === date)
+      .sort((a,b) => a.startTime.localeCompare(b.startTime));
+    const slots = [];
+    let cursor = timeToMins(WORK_START);
+    daySessions.forEach(s => {
+      const sStart = timeToMins(s.startTime);
+      const sEnd   = timeToMins(s.endTime);
+      if (sStart > cursor + 14) {
+        slots.push({ type:'gap', startTime:minsToTime(cursor), endTime:s.startTime, durationMin:sStart-cursor });
+      }
+      slots.push({ type:'booked', session:s, startTime:s.startTime, endTime:s.endTime, durationMin:s.durationMin, status:s.status });
+      cursor = sEnd;
+    });
+    const workEnd = timeToMins(WORK_END);
+    if (workEnd > cursor + 14) {
+      slots.push({ type:'gap', startTime:minsToTime(cursor), endTime:WORK_END, durationMin:workEnd-cursor });
+    }
+    return { daySessions, slots };
+  }
+
+  function tutorStats(tid) {
+    const ts = sessions.filter(s => s.tutorId === tid);
+    return {
+      upcoming: ts.filter(s=>s.status==='scheduled').length,
+      attended: ts.filter(s=>s.status==='attended').length,
+      students: new Set(ts.map(s=>s.studentId)).size
+    };
+  }
+
+  const selectedTutorObj = tutors.find(t => t.id === selectedTutor);
+
+  return (
+    <div className="roster-wrap">
+      {userRole !== 'tutor' && (
+        <div className="roster-tutor-list">
+          {visibleTutors.map(t => {
+            const st = tutorStats(t.id);
+            return (
+              <div key={t.id}
+                className={`roster-tutor-card${selectedTutor===t.id?' active':''}`}
+                onClick={() => setSelectedTutor(selectedTutor===t.id ? null : t.id)}>
+                <div className="rtc-name"><span className="rtc-dot"/>{t.name}</div>
+                <div className="rtc-meta">
+                  <span>{st.students} students</span>
+                  <span>{st.upcoming} upcoming</span>
+                  <span>{st.attended} taught</span>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
+
+      {selectedTutor && (
+        <div className="roster-detail">
+          <div className="roster-detail-hdr">
+            <h3>{selectedTutorObj?.name} — Schedule</h3>
+            <div className="roster-range">
+              <label>From</label>
+              <input type="date" value={fromDate} onChange={e=>setFromDate(e.target.value)}/>
+              <label>To</label>
+              <input type="date" value={toDate} onChange={e=>setToDate(e.target.value)}/>
+            </div>
+          </div>
+
+          {allDates.map(date => {
+            const { daySessions, slots } = buildDaySlots(date);
+            const hasGap   = slots.some(s=>s.type==='gap');
+            const isFreeDay= daySessions.length === 0;
+            const isOpen   = openDays[date] !== false;
+            const dateObj  = new Date(date+'T00:00:00');
+            const dayLabel = dateObj.toLocaleDateString('en-AU',{weekday:'short',day:'numeric',month:'short'});
+            const gapCount = slots.filter(s=>s.type==='gap').length;
+
+            return (
+              <div key={date} className="roster-day-row">
+                <div className="roster-day-hdr" onClick={()=>toggleDay(date)}>
+                  <span className={`roster-day-date${(hasGap||isFreeDay)?' has-gap':''}`}>
+                    {dayLabel}
+                    {isFreeDay && ' ✦ Free Day'}
+                    {!isFreeDay && hasGap && ' ✦ Has Openings'}
+                  </span>
+                  <div className="roster-day-summary">
+                    {isFreeDay
+                      ? <span style={{color:'var(--green)'}}>No sessions booked</span>
+                      : <>
+                          <span>{daySessions.length} session{daySessions.length!==1?'s':''}</span>
+                          {hasGap && <span style={{color:'var(--green)'}}>{gapCount} opening{gapCount!==1?'s':''}</span>}
+                        </>
+                    }
+                    <span style={{color:'var(--text3)'}}>{isOpen?'▴':'▾'}</span>
+                  </div>
+                </div>
+
+                {isOpen && (
+                  isFreeDay
+                    ? <div className="roster-free-day">✦ Fully available — no sessions booked this day</div>
+                    : (
+                      <div className="roster-slots">
+                        {slots.map((slot,i) => {
+                          if (slot.type==='gap') {
+                            return (
+                              <div key={i} className="roster-slot gap">
+                                <span className="slot-time">{fmtTime(slot.startTime)} – {fmtTime(slot.endTime)}</span>
+                                <span className="slot-gap-label">✦ Available — {slot.durationMin} min opening</span>
+                              </div>
+                            );
+                          }
+                          const student = USERS.find(u=>u.id===slot.session.studentId);
+                          return (
+                            <div key={i} className={`roster-slot booked ${slot.status}`}>
+                              <span className="slot-time">{fmtTime(slot.startTime)} – {fmtTime(slot.endTime)}</span>
+                              <span className="slot-student">{student?.name}</span>
+                              <span className="slot-instrument">{slot.session.instrument}</span>
+                              <span className="slot-dur">{slot.durationMin}m</span>
+                              <span className={statusClass(slot.status)}>{slot.status}</span>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    )
+                )}
+              </div>
+            );
+          })}
+
+          {allDates.length===0 && (
+            <div style={{padding:'2rem',textAlign:'center',color:'var(--text3)'}}>No working days in selected range.</div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
+/* ══════════════════════════════════════════════════
+   ADMIN DAY VIEW (accordion by tutor)
+══════════════════════════════════════════════════ */
+function AdminDayView({ sessions, onSelectSession, onTogglePay }) {
+  const [openTutors, setOpenTutors] = useState({});
+  const tutors = USERS.filter(u=>u.role==='tutor');
+
+  // group sessions by tutor → sorted by time
+  const byTutor = {};
+  tutors.forEach(t => { byTutor[t.id] = []; });
+  sessions.forEach(s => {
+    if (!byTutor[s.tutorId]) byTutor[s.tutorId] = [];
+    byTutor[s.tutorId].push(s);
+  });
+  Object.keys(byTutor).forEach(tid => {
+    byTutor[tid].sort((a,b) => a.startTime.localeCompare(b.startTime));
+  });
+
+  const toggle = (id) => setOpenTutors(p=>({...p,[id]:!p[id]}));
+
+  // CSV export
+  function exportXLSX() {
+    const script = document.createElement('script');
+    script.src = 'https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js';
+    script.onload = () => {
+      const XLSX = window.XLSX;
+
+      // Build rows
+      const rows = sessions.map(s => ({
+        'Date':             s.date,
+        'Day':              new Date(s.date+'T00:00:00').toLocaleDateString('en-AU',{weekday:'long'}),
+        'Student':          userName(s.studentId),
+        'Tutor':            userName(s.tutorId),
+        'Start':            fmtTime(s.startTime),
+        'End':              fmtTime(s.endTime),
+        'Duration':         s.durationMin + ' min',
+        'Instrument':       s.instrument,
+        'Accompaniment':    s.accompaniment || '',
+        'Status':           s.status,
+        'Tutor Paid':       s.payrollTutorPaid ? 'Yes' : 'No',
+        'Payment Received': s.paymentReceived  ? 'Yes' : 'No',
+        'Invoiced':         s.invoiced         ? 'Yes' : 'No',
+      }));
+
+      const ws = XLSX.utils.json_to_sheet(rows);
+
+      // Column widths
+      ws['!cols'] = [
+        {wch:12},{wch:10},{wch:20},{wch:16},{wch:10},{wch:10},
+        {wch:10},{wch:12},{wch:18},{wch:12},{wch:11},{wch:18},{wch:10}
+      ];
+
+      // Bold header row
+      const range = XLSX.utils.decode_range(ws['!ref']);
+      for (let C = range.s.c; C <= range.e.c; C++) {
+        const cell = ws[XLSX.utils.encode_cell({r:0, c:C})];
+        if (cell) cell.s = { font:{ bold:true }, fill:{ fgColor:{ rgb:'1E2535' } } };
+      }
+
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, ws, 'Sessions');
+      XLSX.writeFile(wb, 'manly-music-sessions.xlsx');
+    };
+    document.head.appendChild(script);
+  }
+
+  return (
+    <div>
+      <div className="export-bar">
+        <button className="btn btn-sm" onClick={exportXLSX}>⬇ Export XLSX</button>
+      </div>
+      <div className="day-view-wrap">
+        <div className="day-view-hdr">
+          <h3>All Sessions — February 2026</h3>
+          <span style={{fontSize:'.82rem',color:'var(--text3)'}}>{sessions.length} sessions total</span>
+        </div>
+        {tutors.map(tutor => {
+          const tutSessions = byTutor[tutor.id] || [];
+          if (!tutSessions.length) return null;
+          const open = openTutors[tutor.id] !== false; // default open
+          const tutAtt = tutSessions.filter(s=>s.status==='attended').length;
+
+          return (
+            <div key={tutor.id} className="tutor-accordion">
+              <div className="tutor-acc-hdr" onClick={()=>toggle(tutor.id)}>
+                <div className="tutor-acc-hdr-left">
+                  <div className="dot dot-blue"/>
+                  <span className="tutor-name">{tutor.name}</span>
+                  <span className="tutor-session-count">{tutSessions.length} sessions · {tutAtt} attended</span>
+                </div>
+                <span style={{color:'var(--text3)',fontSize:'.85rem'}}>{open?'▴':'▾'}</span>
+              </div>
+              {open && (
+                <div className="tutor-acc-body">
+                  {tutSessions.map(s => {
+                    const student = USERS.find(u=>u.id===s.studentId);
+                    return (
+                      <div key={s.id} className="admin-session-row" onClick={()=>onSelectSession(s)}>
+                        <span className="asr-date">{new Date(s.date+'T00:00:00').toLocaleDateString('en-AU',{day:'numeric',month:'short',weekday:'short'})}</span>
+                        <span className="asr-time">{fmtTime(s.startTime)} – {fmtTime(s.endTime)}</span>
+                        <span className="asr-student">{student?.name}</span>
+                        <span className="asr-instrument">{s.instrument}</span>
+                        <span className={statusClass(s.status)}>{s.status}</span>
+                        <div className="asr-payroll" onClick={e=>e.stopPropagation()}>
+                          <input type="checkbox" className="pay-check" checked={s.payrollTutorPaid}
+                            onChange={()=>onTogglePay(s.id,'payrollTutorPaid')} title="Tutor paid"/>
+                          <span className="pay-label">Paid</span>
+                          <input type="checkbox" className="pay-check" checked={s.paymentReceived}
+                            onChange={()=>onTogglePay(s.id,'paymentReceived')} title="Payment received" style={{marginLeft:'.5rem'}}/>
+                          <span className="pay-label">Recv'd</span>
+                          <input type="checkbox" className="pay-check" checked={s.invoiced}
+                            onChange={()=>onTogglePay(s.id,'invoiced')} title="Invoiced" style={{marginLeft:'.5rem'}}/>
+                          <span className="pay-label">Inv'd</span>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+/* ══════════════════════════════════════════════════
+   LANDING PAGE
+══════════════════════════════════════════════════ */
+function LandingPage({ onSelectLogin }) {
+  return (
+    <div className="landing">
+      <div className="landing-header"><MMLogo/></div>
+      <div className="landing-hero">
+        <h1>Play Your First Song<br/>in 4 Weeks</h1>
+        <p>Personalised music lessons for all ages in Manly, NSW</p>
+      </div>
+      <div className="promo-box">
+        <h2>🎉 Refer a Friend</h2>
+        <p>Get your friend started with a FREE first lesson and earn store credits for yourself!</p>
+      </div>
+      <div className="login-section">
+        <h3>Access Your Portal</h3>
+        <div className="login-buttons">
+          {[['student','Student'],['parent','Parent'],['tutor','Tutor'],['staff','Admin']].map(([val,label])=>(
+            <button key={val} className="login-btn" onClick={()=>onSelectLogin(val)}>
+              {label} Login
+            </button>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ══════════════════════════════════════════════════
+   LOGIN SCREEN
+══════════════════════════════════════════════════ */
+function LoginScreen({ onLogin, userType, onBack, users }) {
+  const [email, setEmail] = useState('');
+  const [pw, setPw] = useState('');
+  const [err, setErr] = useState('');
+
+  function handleLogin(e) {
+    e.preventDefault();
+    const user = users.find(u=>u.email===email && u.password===pw);
+    if (user) {
+      if (userType==='tutor' && user.role==='tutor') { onLogin(user); return; }
+      if (userType==='staff' && (user.role==='admin'||user.role==='tutor')) { onLogin(user); return; }
+      if (userType===user.role) { onLogin(user); return; }
+      setErr('Invalid credentials for this portal type.');
+    } else { setErr('Incorrect username or password.'); }
+  }
+
+  return (
+    <div className="landing">
+      <div className="landing-header"><MMLogo/></div>
+      <div style={{maxWidth:360,margin:'4rem auto',padding:'0 2rem'}}>
+        <h2 style={{textAlign:'center',marginBottom:'2rem',fontWeight:300,letterSpacing:'-.01em'}}>
+          {userType==='staff'?'Admin Login':`${userType.charAt(0).toUpperCase()+userType.slice(1)} Login`}
+        </h2>
+        <form onSubmit={handleLogin} style={{display:'flex',flexDirection:'column',gap:'.9rem'}}>
+          <div className="field"><label>Email</label><input type="email" value={email} onChange={e=>setEmail(e.target.value)} autoFocus/></div>
+          <div className="field"><label>Password</label><input type="password" value={pw} onChange={e=>setPw(e.target.value)}/></div>
+          {err && <div style={{color:'var(--red)',fontSize:'.85rem'}}>{err}</div>}
+          <button type="submit" className="btn btn-primary" style={{padding:'.9rem',marginTop:'.5rem'}}>Log In</button>
+          <button type="button" className="btn" onClick={onBack}>Back</button>
+        </form>
+        <div style={{marginTop:'2rem',padding:'1rem 1.25rem',background:'var(--bg2)',border:'1px solid var(--border)',borderRadius:6,fontSize:'.78rem',color:'var(--text3)',lineHeight:1.9}}>
+          <div style={{color:'var(--text2)',marginBottom:'.3rem',fontWeight:500}}>Demo Login (email / password)</div>
+          <div>Admin: <span style={{color:'var(--text)'}}>admin@manlymusic.com.au / admin123</span></div>
+          <div>Tutor: <span style={{color:'var(--text)'}}>sarah.chen@manlymusic.com.au / tutor123</span></div>
+          <div>Student: <span style={{color:'var(--text)'}}>emma.johnson@student.manlymusic.com.au / student123</span></div>
+          <div>Parent: <span style={{color:'var(--text)'}}>parent.johnson@manlymusic.com.au / parent123</span></div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ══════════════════════════════════════════════════
+   SHARED APP HEADER
+══════════════════════════════════════════════════ */
+function AppHeader({ title, sub, onLogout }) {
+  return (
+    <div className="app-header">
+      <div className="app-header-inner">
+        <div style={{display:'flex',alignItems:'center',gap:'1.5rem'}}>
+          <MMLogo small wordmark={false}/>
+          <div><h2>{title}</h2>{sub&&<p>{sub}</p>}</div>
+        </div>
+        <button className="btn" onClick={onLogout}>Logout</button>
+      </div>
+    </div>
+  );
+}
+
+/* ══════════════════════════════════════════════════
+   STUDENT DASHBOARD
+══════════════════════════════════════════════════ */
+function StudentDashboard({ user, sessions, onLogout, onUpdateSession, onSaveRecording }) {
+  const [activeSession, setActiveSession] = useState(null);
+  const [editingTagline, setEditingTagline] = useState(false);
+  const [tagline, setTagline] = useState(
+    localStorage.getItem(`tagline_${user.id}`) || 'Music Student'
+  );
+  
+  const mySessions = sessions.filter(s=>s.studentId===user.id).sort((a,b)=>a.date.localeCompare(b.date));
+  const attended   = mySessions.filter(s=>s.status==='attended').length;
+  const upcoming   = mySessions.filter(s=>s.status==='scheduled').length;
+  const myTasks    = TASKS.filter(t=>t.studentId===user.id);
+
+  function saveTagline() {
+    localStorage.setItem(`tagline_${user.id}`, tagline);
+    setEditingTagline(false);
+  }
+
+  return (
+    <div>
+      {/* Custom Hero Header */}
+      <div style={{
+        background: 'linear-gradient(135deg, var(--bg1) 0%, var(--bg2) 100%)',
+        borderBottom: '1px solid var(--border)',
+        padding: '2.5rem 2rem 2rem'
+      }}>
+        <div style={{maxWidth: '1400px', margin: '0 auto', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start'}}>
+          <div>
+            <div style={{display: 'flex', alignItems: 'center', gap: '1.5rem', marginBottom: '.5rem'}}>
+              <MMLogo small wordmark={false}/>
+              <h1 style={{
+                fontSize: '2.5rem',
+                fontWeight: 600,
+                background: 'linear-gradient(135deg, var(--accent) 0%, #4CAF50 100%)',
+                WebkitBackgroundClip: 'text',
+                WebkitTextFillColor: 'transparent',
+                margin: 0
+              }}>
+                Welcome, {user.name}!
+              </h1>
+            </div>
+            
+            {/* Editable Tagline */}
+            <div style={{marginLeft: '4.5rem'}}>
+              {editingTagline ? (
+                <div style={{display: 'flex', gap: '.5rem', alignItems: 'center'}}>
+                  <input 
+                    type="text"
+                    value={tagline}
+                    onChange={e => setTagline(e.target.value)}
+                    placeholder="Your tagline..."
+                    style={{
+                      background: 'var(--bg3)',
+                      border: '1px solid var(--border2)',
+                      borderRadius: '6px',
+                      color: 'var(--text)',
+                      padding: '.4rem .8rem',
+                      fontSize: '1rem',
+                      outline: 'none',
+                      maxWidth: '300px'
+                    }}
+                    onFocus={e => e.target.style.borderColor = 'var(--accent)'}
+                    onBlur={e => e.target.style.borderColor = 'var(--border2)'}
+                    autoFocus
+                  />
+                  <button className="btn btn-sm btn-primary" onClick={saveTagline}>Save</button>
+                  <button className="btn btn-sm" onClick={() => {
+                    setTagline(localStorage.getItem(`tagline_${user.id}`) || 'Music Student');
+                    setEditingTagline(false);
+                  }}>Cancel</button>
+                </div>
+              ) : (
+                <div 
+                  style={{
+                    fontSize: '1.1rem',
+                    fontStyle: 'italic',
+                    color: 'var(--text2)',
+                    cursor: 'pointer',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '.5rem',
+                    padding: '.2rem .5rem',
+                    borderRadius: '4px',
+                    transition: 'background 0.2s'
+                  }}
+                  onClick={() => setEditingTagline(true)}
+                  onMouseEnter={e => e.currentTarget.style.background = 'var(--bg3)'}
+                  onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
+                  title="Click to edit your tagline"
+                >
+                  "{tagline}" <span style={{fontSize: '.9rem', opacity: 0.6}}>✏️</span>
+                </div>
+              )}
+            </div>
+          </div>
+          
+          <button className="btn" onClick={onLogout} style={{marginTop: '.5rem'}}>Logout</button>
+        </div>
+      </div>
+      
+      <div className="dashboard">
+        {/* Smaller Stats */}
+        <div style={{
+          display: 'grid',
+          gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))',
+          gap: '.75rem',
+          marginBottom: '1.5rem'
+        }}>
+          {[['Sessions Attended',attended,'var(--green)'],['Upcoming',upcoming,null],['Tasks',myTasks.length,null],['Completed',myTasks.filter(t=>t.status==='completed').length,'var(--green)']].map(([l,v,c])=>(
+            <div key={l} style={{
+              background: 'var(--bg2)',
+              border: '1px solid var(--border)',
+              borderRadius: '8px',
+              padding: '.75rem 1rem',
+              textAlign: 'center'
+            }}>
+              <div style={{fontSize: '1.5rem', fontWeight: 600, color: c || 'var(--text)'}}>{v}</div>
+              <div style={{fontSize: '.75rem', color: 'var(--text3)', textTransform: 'uppercase', letterSpacing: '.05em', marginTop: '.2rem'}}>{l}</div>
+            </div>
+          ))}
+        </div>
+
+        <AttendanceCalendar sessions={mySessions} userRole="student" currentUserId={user.id} onSelectSession={setActiveSession}/>
+
+        {/* Upcoming sessions quick list */}
+        {upcoming > 0 && (
+          <div className="card">
+            <div className="card-hdr"><div className="card-title">Upcoming Sessions</div></div>
+            {mySessions.filter(s=>s.status==='scheduled').map(s=>(
+              <div key={s.id} className="task-item" style={{cursor:'pointer'}} onClick={()=>setActiveSession(s)}>
+                <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:'.4rem'}}>
+                  <div className="task-title">{fmtDate(s.date)} · {fmtTime(s.startTime)}</div>
+                  <span className={statusClass(s.status)}>{s.status}</span>
+                </div>
+                <div className="task-desc">{s.instrument} · {s.durationMin} min · {userName(s.tutorId)}</div>
+                {s.plannedSummary && <div style={{fontSize:'.82rem',color:'var(--text3)',marginTop:'.3rem'}}>{s.plannedSummary}</div>}
+              </div>
+            ))}
+          </div>
+        )}
+
+        {/* Tasks */}
+        <div className="card">
+          <div className="card-hdr"><div className="card-title">Practice Tasks</div></div>
+          {myTasks.map(t=>(
+            <div key={t.id} className="task-item">
+              <div style={{display:'flex',justifyContent:'space-between',alignItems:'flex-start',marginBottom:'.3rem'}}>
+                <div className="task-title">{t.title}</div>
+                <span className={`badge badge-${t.status==='completed'?'complete':t.status==='in-progress'?'progress':'pending'}`}>{t.status}</span>
+              </div>
+              <div className="task-desc">{t.description}</div>
+              <div style={{fontSize:'.78rem',color:'var(--text3)'}}>Due: {t.dueDate}</div>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {activeSession && (
+        <SessionPanel
+          session={activeSession}
+          userRole="student"
+          currentUserId={user.id}
+          onClose={()=>setActiveSession(null)}
+          onSaveRecording={onSaveRecording}
+          onUpdateSession={onUpdateSession}
+          onMarkStatus={()=>{}}
+        />
+      )}
+    </div>
+  );
+}
+
+/* ══════════════════════════════════════════════════
+   PARENT DASHBOARD
+══════════════════════════════════════════════════ */
+function ParentDashboard({ user, sessions, onLogout }) {
+  const [activeSession, setActiveSession] = useState(null);
+  const childIds     = user.childIds || [];
+  const childSessions= sessions.filter(s=>childIds.includes(s.studentId)).sort((a,b)=>a.date.localeCompare(b.date));
+  const child        = USERS.find(u=>childIds.includes(u.id));
+  const attended     = childSessions.filter(s=>s.status==='attended').length;
+  const missed       = childSessions.filter(s=>s.status==='missed').length;
+  const total        = attended + missed;
+  const rate         = total > 0 ? Math.round(attended/total*100) : null;
+
+  return (
+    <div>
+      {/* Custom Hero Header */}
+      <div style={{
+        background: 'linear-gradient(135deg, var(--bg1) 0%, var(--bg2) 100%)',
+        borderBottom: '1px solid var(--border)',
+        padding: '2.5rem 2rem 2rem'
+      }}>
+        <div style={{maxWidth: '1400px', margin: '0 auto', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start'}}>
+          <div>
+            <div style={{display: 'flex', alignItems: 'center', gap: '1.5rem', marginBottom: '.5rem'}}>
+              <MMLogo small wordmark={false}/>
+              <h1 style={{
+                fontSize: '2.5rem',
+                fontWeight: 600,
+                background: 'linear-gradient(135deg, var(--accent) 0%, #4CAF50 100%)',
+                WebkitBackgroundClip: 'text',
+                WebkitTextFillColor: 'transparent',
+                margin: 0
+              }}>
+                Welcome, {user.name}!
+              </h1>
+            </div>
+            <div style={{
+              marginLeft: '4.5rem',
+              fontSize: '1.1rem',
+              fontStyle: 'italic',
+              color: 'var(--text2)'
+            }}>
+              {child?.name}'s Progress
+            </div>
+          </div>
+          
+          <button className="btn" onClick={onLogout} style={{marginTop: '.5rem'}}>Logout</button>
+        </div>
+      </div>
+      
+      <div className="dashboard">
+        {/* Smaller Stats */}
+        <div style={{
+          display: 'grid',
+          gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))',
+          gap: '.75rem',
+          marginBottom: '1.5rem'
+        }}>
+          {[['Sessions',attended,'var(--green)'],['Missed',missed,missed>0?'var(--red)':null],['Upcoming',childSessions.filter(s=>s.status==='scheduled').length,null],['Attendance Rate',rate!==null?rate+'%':'—',null]].map(([l,v,c])=>(
+            <div key={l} style={{
+              background: 'var(--bg2)',
+              border: '1px solid var(--border)',
+              borderRadius: '8px',
+              padding: '.75rem 1rem',
+              textAlign: 'center'
+            }}>
+              <div style={{fontSize: '1.5rem', fontWeight: 600, color: c || 'var(--text)'}}>{v}</div>
+              <div style={{fontSize: '.75rem', color: 'var(--text3)', textTransform: 'uppercase', letterSpacing: '.05em', marginTop: '.2rem'}}>{l}</div>
+            </div>
+          ))}
+        </div>
+
+        <AttendanceCalendar sessions={childSessions} userRole="parent" currentUserId={user.id} onSelectSession={setActiveSession}/>
+
+        <div className="card">
+          <div className="card-hdr"><div className="card-title">Session History</div></div>
+          {[...childSessions].reverse().slice(0,8).map(s=>(
+            <div key={s.id} className="task-item" style={{cursor:'pointer'}} onClick={()=>setActiveSession(s)}>
+              <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:'.35rem'}}>
+                <div className="task-title">{fmtDate(s.date)}</div>
+                <span className={statusClass(s.status)}>{s.status}</span>
+              </div>
+              <div className="task-desc">{s.instrument} · {s.durationMin} min · {fmtTime(s.startTime)} – {fmtTime(s.endTime)}</div>
+              {s.tutorComments && <div style={{fontSize:'.82rem',color:'var(--text2)',marginTop:'.3rem'}}>💬 Tutor note: {s.tutorComments.slice(0,80)}{s.tutorComments.length>80?'…':''}</div>}
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {activeSession && (
+        <SessionPanel
+          session={activeSession}
+          userRole="parent"
+          currentUserId={user.id}
+          onClose={()=>setActiveSession(null)}
+          onSaveRecording={()=>{}}
+          onUpdateSession={()=>{}}
+          onMarkStatus={()=>{}}
+        />
+      )}
+    </div>
+  );
+}
+
+/* ══════════════════════════════════════════════════
+   TUTOR SESSIONS LIST VIEW
+══════════════════════════════════════════════════ */
+function TutorSessionsList({ sessions, onSelectSession, onMarkStatus }) {
+  const upcomingSessions = sessions.filter(s => s.status === 'scheduled').sort((a,b) => a.date.localeCompare(b.date) || a.startTime.localeCompare(b.startTime));
+  const completedSessions = sessions.filter(s => s.status === 'attended').sort((a,b) => b.date.localeCompare(a.date) || b.startTime.localeCompare(a.startTime));
+  const cancelledSessions = sessions.filter(s => s.status === 'cancelled').sort((a,b) => b.date.localeCompare(a.date));
+  const missedSessions = sessions.filter(s => s.status === 'missed').sort((a,b) => b.date.localeCompare(a.date));
+
+  function SessionRow({ session, showQuickActions }) {
+    const student = USERS.find(u => u.id === session.studentId);
+    
+    return (
+      <div 
+        style={{
+          padding: '1rem',
+          borderBottom: '1px solid var(--border)',
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          gap: '1rem',
+          cursor: 'pointer',
+          transition: 'background 0.2s'
+        }}
+        onMouseEnter={e => e.currentTarget.style.background = 'var(--bg2)'}
+        onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
+        onClick={() => onSelectSession(session)}
+      >
+        <div style={{flex: 1}}>
+          <div style={{display: 'flex', gap: '1rem', alignItems: 'center', marginBottom: '.3rem'}}>
+            <span style={{fontSize: '.95rem', fontWeight: 500, color: 'var(--text)'}}>{fmtDate(session.date)}</span>
+            <span style={{fontSize: '.9rem', color: 'var(--text2)'}}>{fmtTime(session.startTime)} - {fmtTime(session.endTime)}</span>
+            <span className={statusClass(session.status)}>{session.status}</span>
+          </div>
+          <div style={{fontSize: '.9rem', color: 'var(--text2)'}}>
+            {student?.name} • {session.instrument} • {session.durationMin} min
+          </div>
+          {session.plannedSummary && (
+            <div style={{fontSize: '.85rem', color: 'var(--text3)', marginTop: '.3rem'}}>
+              {session.plannedSummary}
+            </div>
+          )}
+        </div>
+        
+        {showQuickActions && (
+          <div style={{display: 'flex', gap: '.4rem'}} onClick={e => e.stopPropagation()}>
+            <button 
+              className="btn btn-sm btn-green" 
+              onClick={() => onMarkStatus(session.id, 'attended')}
+              title="Mark as attended"
+            >
+              ✓ Attended
+            </button>
+            <button 
+              className="btn btn-sm btn-red" 
+              onClick={() => onMarkStatus(session.id, 'missed')}
+              title="Mark as missed"
+            >
+              ✗ Missed
+            </button>
+            <button 
+              className="btn btn-sm btn-amber" 
+              onClick={() => onMarkStatus(session.id, 'cancelled')}
+              title="Cancel session"
+            >
+              Cancel
+            </button>
+          </div>
+        )}
+        
+        {session.status === 'cancelled' && (
+          <div onClick={e => e.stopPropagation()}>
+            <button 
+              className="btn btn-sm btn-blue" 
+              onClick={() => onMarkStatus(session.id, 'scheduled')}
+              title="Re-open this time slot"
+            >
+              ↻ Re-open Slot
+            </button>
+          </div>
+        )}
+      </div>
+    );
+  }
+
+  return (
+    <div style={{display: 'flex', flexDirection: 'column', gap: '1.5rem'}}>
+      {/* Upcoming Sessions */}
+      {upcomingSessions.length > 0 && (
+        <div className="card">
+          <div className="card-hdr">
+            <div className="card-title">Upcoming Sessions ({upcomingSessions.length})</div>
+          </div>
+          {upcomingSessions.map(s => (
+            <SessionRow key={s.id} session={s} showQuickActions={true} />
+          ))}
+        </div>
+      )}
+
+      {/* Completed Sessions */}
+      {completedSessions.length > 0 && (
+        <div className="card">
+          <div className="card-hdr">
+            <div className="card-title">Completed Sessions ({completedSessions.length})</div>
+          </div>
+          {completedSessions.slice(0, 10).map(s => (
+            <SessionRow key={s.id} session={s} showQuickActions={false} />
+          ))}
+          {completedSessions.length > 10 && (
+            <div style={{padding: '.75rem', textAlign: 'center', fontSize: '.85rem', color: 'var(--text3)'}}>
+              Showing 10 most recent • {completedSessions.length - 10} more
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Cancelled Sessions */}
+      {cancelledSessions.length > 0 && (
+        <div className="card">
+          <div className="card-hdr">
+            <div className="card-title">Cancelled Sessions ({cancelledSessions.length})</div>
+          </div>
+          {cancelledSessions.slice(0, 5).map(s => (
+            <SessionRow key={s.id} session={s} showQuickActions={false} />
+          ))}
+          {cancelledSessions.length > 5 && (
+            <div style={{padding: '.75rem', textAlign: 'center', fontSize: '.85rem', color: 'var(--text3)'}}>
+              Showing 5 most recent • {cancelledSessions.length - 5} more
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Missed Sessions */}
+      {missedSessions.length > 0 && (
+        <div className="card">
+          <div className="card-hdr">
+            <div className="card-title">Missed Sessions ({missedSessions.length})</div>
+          </div>
+          {missedSessions.slice(0, 5).map(s => (
+            <SessionRow key={s.id} session={s} showQuickActions={false} />
+          ))}
+        </div>
+      )}
+
+      {sessions.length === 0 && (
+        <div className="card" style={{padding: '2rem', textAlign: 'center', color: 'var(--text3)'}}>
+          No sessions found
+        </div>
+      )}
+    </div>
+  );
+}
+
+/* ══════════════════════════════════════════════════
+   TUTOR DASHBOARD
+══════════════════════════════════════════════════ */
+function TutorDashboard({ user, sessions, onLogout, onUpdateSession, onSaveRecording, onMarkStatus, onAddSession, onSendReminder }) {
+  const [activeSession,  setActiveSession]  = useState(null);
+  const [showSchedule,   setShowSchedule]   = useState(false);
+  const [filterStudent,  setFilterStudent]  = useState('all');
+  const [view,           setView]           = useState('calendar');
+
+  const myStudentIds = [...new Set(sessions.filter(s=>s.tutorId===user.id).map(s=>s.studentId))];
+  const myStudents   = USERS.filter(u=>myStudentIds.includes(u.id));
+
+  const mySessions = sessions.filter(s => s.tutorId===user.id && (filterStudent==='all' || s.studentId===parseInt(filterStudent)))
+    .sort((a,b)=>a.date.localeCompare(b.date));
+
+  const attended = sessions.filter(s=>s.tutorId===user.id&&s.status==='attended').length;
+  const upcoming = sessions.filter(s=>s.tutorId===user.id&&s.status==='scheduled').length;
+
+  return (
+    <div>
+      <AppHeader title="Tutor Dashboard" sub={`Welcome, ${user.name}`} onLogout={onLogout}/>
+      <div className="dashboard">
+        <div className="stats-grid">
+          {[['My Students',myStudents.length,null],['Sessions Taught',attended,'var(--green)'],['Upcoming',upcoming,null]].map(([l,v,c])=>(
+            <div key={l} className="stat-card">
+              <div className="stat-val" style={c?{color:c}:{}}>{v}</div>
+              <div className="stat-lbl">{l}</div>
+            </div>
+          ))}
+        </div>
+
+        <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:'1rem'}}>
+          <div className="cal-filter">
+            <button className={`filter-btn${filterStudent==='all'?' active':''}`} onClick={()=>setFilterStudent('all')}>All Students</button>
+            {myStudents.map(s=>(
+              <button key={s.id} className={`filter-btn${filterStudent===String(s.id)?' active':''}`} onClick={()=>setFilterStudent(String(s.id))}>{s.name}</button>
+            ))}
+          </div>
+          <div style={{display:'flex',gap:'.5rem'}}>
+            <button className={`btn btn-sm${view==='calendar'?' btn-primary':''}`} onClick={()=>setView('calendar')}>Calendar</button>
+            <button className={`btn btn-sm${view==='list'?' btn-primary':''}`} onClick={()=>setView('list')}>Sessions List</button>
+            <button className={`btn btn-sm${view==='roster'?' btn-primary':''}`} onClick={()=>setView('roster')}>My Schedule</button>
+            <button className="btn btn-primary btn-sm" onClick={()=>setShowSchedule(true)}>+ Schedule Session</button>
+          </div>
+        </div>
+
+        {view==='calendar' ? (
+          <AttendanceCalendar sessions={mySessions} userRole="tutor" currentUserId={user.id} onSelectSession={setActiveSession}/>
+        ) : view==='list' ? (
+          <TutorSessionsList sessions={mySessions} onSelectSession={setActiveSession} onMarkStatus={onMarkStatus}/>
+        ) : (
+          <TutorRoster sessions={sessions} currentUserId={user.id} userRole="tutor"/>
+        )}
+
+        <div className="card">
+          <div className="card-hdr"><div className="card-title">Upcoming Sessions</div></div>
+          {mySessions.filter(s=>s.status==='scheduled').map(s=>(
+            <div key={s.id} className="task-item" style={{cursor:'pointer'}} onClick={()=>setActiveSession(s)}>
+              <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:'.4rem'}}>
+                <div className="task-title">{fmtDate(s.date)} · {fmtTime(s.startTime)}</div>
+                <span className={statusClass(s.status)}>{s.status}</span>
+              </div>
+              <div className="task-desc">{userName(s.studentId)} · {s.instrument} · {s.durationMin} min</div>
+              {s.plannedSummary && <div style={{fontSize:'.82rem',color:'var(--text3)',marginTop:'.3rem'}}>{s.plannedSummary}</div>}
+            </div>
+          ))}
+          {mySessions.filter(s=>s.status==='scheduled').length===0 && (
+            <p style={{color:'var(--text3)',fontSize:'.875rem'}}>No upcoming sessions scheduled.</p>
+          )}
+        </div>
+      </div>
+
+      {activeSession && (
+        <SessionPanel
+          session={activeSession}
+          userRole="tutor"
+          currentUserId={user.id}
+          onClose={()=>setActiveSession(null)}
+          onSaveRecording={onSaveRecording}
+          onUpdateSession={onUpdateSession}
+          onMarkStatus={onMarkStatus}
+          onSendReminder={onSendReminder}
+        />
+      )}
+      {showSchedule && (
+        <ScheduleModal
+          onClose={()=>setShowSchedule(false)}
+          onSave={onAddSession}
+          currentUserId={user.id}
+          userRole="tutor"
+          sessions={sessions}
+        />
+      )}
+    </div>
+  );
+}
+
+/* ══════════════════════════════════════════════════
+   ADMIN DASHBOARD
+══════════════════════════════════════════════════ */
+function AdminDashboard({ user, sessions, onLogout, onUpdateSession, onSaveRecording, onMarkStatus, onAddSession, onTogglePay, onSendBroadcast, onSendReminder }) {
+  const [activeSession, setActiveSession] = useState(null);
+  const [showSchedule,  setShowSchedule]  = useState(false);
+  const [showBroadcast, setShowBroadcast] = useState(false);
+  const [showBroadcastEmail, setShowBroadcastEmail] = useState(false);
+  const [filterStudent, setFilterStudent] = useState('all');
+  const [view, setView]                   = useState('calendar'); // 'calendar' | 'list'
+  const [searchQuery, setSearchQuery]     = useState('');
+
+  const students = USERS.filter(u=>u.role==='student').sort((a,b)=>a.name.split(' ').pop().localeCompare(b.name.split(' ').pop()));
+  
+  // Filter students by search query (wildcard search on first name or surname)
+  const filteredStudents = students.filter(s => {
+    if (!searchQuery.trim()) return true;
+    const query = searchQuery.toLowerCase();
+    const nameParts = s.name.toLowerCase().split(' ');
+    const firstName = nameParts[0];
+    const surname = nameParts[nameParts.length - 1];
+    return firstName.includes(query) || surname.includes(query) || s.name.toLowerCase().includes(query);
+  });
+  
+  const visibleSessions = sessions.filter(s => {
+    if (filterStudent !== 'all' && s.studentId !== parseInt(filterStudent)) return false;
+    if (searchQuery.trim()) {
+      const student = USERS.find(u => u.id === s.studentId);
+      if (!student) return false;
+      const query = searchQuery.toLowerCase();
+      const nameParts = student.name.toLowerCase().split(' ');
+      const firstName = nameParts[0];
+      const surname = nameParts[nameParts.length - 1];
+      return firstName.includes(query) || surname.includes(query) || student.name.toLowerCase().includes(query);
+    }
+    return true;
+  });
+
+  const attended = sessions.filter(s=>s.status==='attended').length;
+  const missed   = sessions.filter(s=>s.status==='missed').length;
+  const revenue  = sessions.filter(s=>s.paymentReceived).length;
+  const unpaid   = sessions.filter(s=>s.status==='attended'&&!s.payrollTutorPaid).length;
+  
+  // Calculate overdue assessments (attended sessions without assessments, >2 hours old)
+  const now = new Date();
+  const twoHoursAgo = new Date(now.getTime() - 2 * 60 * 60 * 1000);
+  const overdueAssessments = sessions.filter(s => {
+    if (s.status !== 'attended') return false;
+    const hasAssessment = s.ratingTechnique || s.ratingRhythm || s.ratingTone || 
+                          s.ratingSightReading || s.ratingExpression || s.ratingFocus;
+    if (hasAssessment) return false;
+    const sessionDateTime = new Date(`${s.date}T${s.endTime}`);
+    return sessionDateTime <= twoHoursAgo;
+  });
+
+  return (
+    <div>
+      <AppHeader title="Admin Dashboard" sub={`Welcome, ${user.name}`} onLogout={onLogout}/>
+      <div className="dashboard">
+        <div className="stats-grid">
+          {[
+            ['Total Sessions',sessions.length,null],
+            ['Attended',attended,'var(--green)'],
+            ['Missed',missed,missed>0?'var(--red)':null],
+            ['Payments Received',revenue,null],
+            ['Tutor Pay Pending',unpaid,unpaid>0?'var(--amber)':null]
+          ].map(([l,v,c])=>(
+            <div key={l} className="stat-card">
+              <div className="stat-val" style={c?{color:c}:{}}>{v}</div>
+              <div className="stat-lbl">{l}</div>
+            </div>
+          ))}
+        </div>
+
+        {/* toolbar */}
+        <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:'1rem',flexWrap:'wrap',gap:'.75rem'}}>
+          <div style={{display:'flex',gap:'.75rem',flexWrap:'wrap',alignItems:'center',flex:1}}>
+            {/* Search Field */}
+            <input 
+              type="text" 
+              placeholder="🔍 Search students (name or surname)..." 
+              value={searchQuery}
+              onChange={e => {
+                setSearchQuery(e.target.value);
+                setFilterStudent('all'); // Reset filter when searching
+              }}
+              style={{
+                background:'var(--bg2)',
+                border:'1px solid var(--border2)',
+                borderRadius:'6px',
+                color:'var(--text)',
+                padding:'.6rem 1rem',
+                fontSize:'.9rem',
+                outline:'none',
+                minWidth:'250px',
+                flex:'0 1 auto'
+              }}
+              onFocus={e => e.target.style.borderColor = 'var(--accent)'}
+              onBlur={e => e.target.style.borderColor = 'var(--border2)'}
+            />
+            
+            {/* Student Filter Buttons */}
+            <div className="cal-filter" style={{margin:0,flex:'1 1 auto'}}>
+              <button className={`filter-btn${filterStudent==='all'?' active':''}`} onClick={()=>{setFilterStudent('all');setSearchQuery('');}}>All Students</button>
+              {filteredStudents.map(s=>(
+                <button key={s.id} className={`filter-btn${filterStudent===String(s.id)?' active':''}`} onClick={()=>{setFilterStudent(String(s.id));setSearchQuery('');}}>
+                  {s.name}
+                </button>
+              ))}
+            </div>
+          </div>
+          
+          {/* Overdue Assessments Alert */}
+          {overdueAssessments.length > 0 && (
+            <div style={{
+              background: 'linear-gradient(135deg, #ff4444 0%, #cc0000 100%)',
+              color: '#fff',
+              padding: '.75rem 1rem',
+              borderRadius: '8px',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '.75rem',
+              fontWeight: 600,
+              fontSize: '.9rem',
+              border: '2px solid #ff0000',
+              boxShadow: '0 4px 12px rgba(255, 68, 68, 0.3)',
+              cursor: 'pointer'
+            }}
+            onClick={() => {
+              const msg = overdueAssessments.map(s => {
+                const student = USERS.find(u => u.id === s.studentId);
+                const tutor = USERS.find(u => u.id === s.tutorId);
+                return `• ${tutor?.name} - ${student?.name} (${s.instrument}) - ${fmtDate(s.date)} ${fmtTime(s.startTime)}`;
+              }).join('\n');
+              alert(`🚨 ASSESSMENTS OVERDUE (>2 hours):\n\n${msg}\n\nReminders already sent via SMS to tutors and admin.`);
+            }}
+            title="Click to see details"
+            >
+              <span style={{fontSize: '1.2rem'}}>🚨</span>
+              <span>{overdueAssessments.length} Assessment{overdueAssessments.length !== 1 ? 's' : ''} Overdue</span>
+              <span style={{fontSize: '.8rem', opacity: 0.9}}>(Click for details)</span>
+            </div>
+          )}
+          
+          <div style={{display:'flex',gap:'.5rem'}}>
+            <button className={`btn btn-sm${view==='calendar'?' btn-primary':''}`} onClick={()=>setView('calendar')}>Calendar</button>
+            <button className={`btn btn-sm${view==='list'?' btn-primary':''}`} onClick={()=>setView('list')}>Day List</button>
+            <button className={`btn btn-sm${view==='roster'?' btn-primary':''}`} onClick={()=>setView('roster')}>Tutor Roster</button>
+            <button className="btn btn-amber btn-sm" onClick={()=>setShowBroadcast(true)}>📢 Broadcast SMS</button>
+            <button className="btn btn-blue btn-sm" onClick={()=>setShowBroadcastEmail(true)}>📧 Broadcast Email</button>
+            <button className="btn btn-primary btn-sm" onClick={()=>setShowSchedule(true)}>+ Schedule</button>
+          </div>
+        </div>
+
+        {view==='calendar' ? (
+          <AttendanceCalendar sessions={visibleSessions} userRole="admin" currentUserId={user.id} onSelectSession={setActiveSession}/>
+        ) : view==='list' ? (
+          <AdminDayView sessions={visibleSessions} onSelectSession={setActiveSession} onTogglePay={onTogglePay}/>
+        ) : (
+          <TutorRoster sessions={sessions} currentUserId={user.id} userRole="admin"/>
+        )}
+      </div>
+
+      {activeSession && (
+        <SessionPanel
+          session={activeSession}
+          userRole="admin"
+          currentUserId={user.id}
+          onClose={()=>setActiveSession(null)}
+          onSaveRecording={onSaveRecording}
+          onUpdateSession={onUpdateSession}
+          onMarkStatus={onMarkStatus}
+          onSendReminder={onSendReminder}
+        />
+      )}
+      {showSchedule && (
+        <ScheduleModal
+          onClose={()=>setShowSchedule(false)}
+          onSave={onAddSession}
+          currentUserId={user.id}
+          userRole="admin"
+          sessions={sessions}
+        />
+      )}
+      {showBroadcast && (
+        <BroadcastModal
+          onClose={()=>setShowBroadcast(false)}
+          onSend={onSendBroadcast}
+        />
+      )}
+      {showBroadcastEmail && (
+        <BroadcastEmailModal
+          onClose={()=>setShowBroadcastEmail(false)}
+          adminEmail={user.email}
+        />
+      )}
+    </div>
+  );
+}
+
+/* ══════════════════════════════════════════════════
+   ASSESSMENT REMINDER CHECKER
+══════════════════════════════════════════════════ */
+async function checkAssessmentReminders(sessions, users) {
+  try {
+    const now = new Date();
+    const twoHoursAgo = new Date(now.getTime() - 2 * 60 * 60 * 1000);
+    
+    // Find sessions that need assessment reminders
+    const overduesSessions = sessions.filter(session => {
+      // Must be attended
+      if (session.status !== 'attended') return false;
+      
+      // Must not have assessment
+      const hasAssessment = session.ratingTechnique || session.ratingRhythm || 
+                            session.ratingTone || session.ratingSightReading ||
+                            session.ratingExpression || session.ratingFocus;
+      if (hasAssessment) return false;
+      
+      // Must not have already sent reminder
+      if (session.assessmentReminderSentAt) return false;
+      
+      // Must be >2 hours since session ended
+      const sessionDateTime = new Date(`${session.date}T${session.endTime}`);
+      if (sessionDateTime > twoHoursAgo) return false;
+      
+      return true;
+    });
+    
+    if (overduesSessions.length === 0) return;
+    
+    console.log(`Found ${overduesSessions.length} overdue assessments, sending reminders...`);
+    
+    // Send reminders for each overdue session
+    for (const session of overduesSessions) {
+      const student = users.find(u => u.id === session.studentId);
+      const tutor = users.find(u => u.id === session.tutorId);
+      const admin = users.find(u => u.role === 'admin');
+      
+      if (!student || !tutor) continue;
+      
+      // Format session info for SMS
+      const sessionInfo = `${student.name}'s ${session.instrument} session at ${fmtTime(session.startTime)} on ${fmtDate(session.date)}`;
+      
+      // Send SMS to tutor
+      if (tutor.mobile) {
+        const tutorMessage = `⚠️ Assessment Reminder: Please add assessment for ${sessionInfo}. Login: manly-music-v7.netlify.app`;
+        await sendSMS(tutor.mobile, tutorMessage, 'assessment_reminder');
+      }
+      
+      // Send SMS to admin
+      if (admin && admin.mobile) {
+        const adminMessage = `🚨 Assessment Overdue: ${tutor.name} hasn't assessed ${sessionInfo}. Please follow up.`;
+        await sendSMS(admin.mobile, adminMessage, 'assessment_reminder');
+      }
+      
+      // Mark reminder as sent in database
+      await supabase
+        .from('sessions')
+        .update({ assessment_reminder_sent_at: now.toISOString() })
+        .eq('id', session.id);
+      
+      console.log(`Sent assessment reminder for session ${session.id}`);
+    }
+    
+  } catch (error) {
+    console.error('Error checking assessment reminders:', error);
+    // Don't throw - we don't want to break app load if reminders fail
+  }
+}
+
+// Helper function to send SMS via Netlify function
+async function sendSMS(phoneNumber, message, messageType = 'reminder') {
+  try {
+    const response = await fetch('/.netlify/functions/send-sms', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        to: phoneNumber,
+        message: message,
+        messageType: messageType
+      })
+    });
+    
+    if (!response.ok) {
+      throw new Error('SMS send failed');
+    }
+    
+    return { success: true };
+  } catch (error) {
+    console.error('SMS send error:', error);
+    return { success: false, error: error.message };
+  }
+}
+
+/* ══════════════════════════════════════════════════
+   MAIN APP
+══════════════════════════════════════════════════ */
+function App() {
+  const [currentUser, setUser] = useState(null);
+  const [loginType, setLogin] = useState(null);
+  const [sessions, setSessions] = useState([]);
+  const [users, setUsers] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  // Load data from Supabase on mount
+  useEffect(() => {
+    async function loadData() {
+      try {
+        const { data: usersData, error: usersError } = await supabase
+          .from('users')
+          .select('*');
+        
+        if (usersError) throw usersError;
+        
+        const { data: sessionsData, error: sessionsError } = await supabase
+          .from('sessions')
+          .select('*');
+        
+        if (sessionsError) throw sessionsError;
+
+        // Transform sessions from DB format to app format
+        const transformedSessions = sessionsData.map(s => ({
+          id: s.id,
+          studentId: s.student_id,
+          tutorId: s.tutor_id,
+          date: s.date,
+          startTime: s.start_time,
+          endTime: s.end_time,
+          durationMin: s.duration_min,
+          instrument: s.instrument,
+          accompaniment: s.accompaniment || '',
+          status: s.status,
+          plannedSummary: s.planned_summary || '',
+          tutorComments: s.tutor_comments || '',
+          studentComments: s.student_comments || '',
+          recordings: [],
+          payrollTutorPaid: s.payroll_tutor_paid,
+          paymentReceived: s.payment_received,
+          invoiced: s.invoiced,
+          // Assessment fields
+          ratingTechnique: s.rating_technique,
+          ratingRhythm: s.rating_rhythm,
+          ratingTone: s.rating_tone,
+          ratingSightReading: s.rating_sight_reading,
+          ratingExpression: s.rating_expression,
+          ratingFocus: s.rating_focus,
+          assessmentNotes: s.assessment_notes,
+          assessedAt: s.assessed_at,
+          assessedBy: s.assessed_by,
+          assessmentReminderSentAt: s.assessment_reminder_sent_at
+        }));
+
+        setUsers(usersData);
+        setSessions(transformedSessions);
+        USERS = usersData;
+        
+        // Check for overdue assessments and send reminders
+        await checkAssessmentReminders(transformedSessions, usersData);
+        
+      } catch (error) {
+        console.error('Error loading data:', error);
+        alert('Failed to load data from database. Check console for details.');
+      } finally {
+        setLoading(false);
+      }
+    }
+    
+    loadData();
+  }, []);
+
+  async function updateSession(id, patch) {
+    setSessions(prev => prev.map(s => s.id===id ? {...s,...patch} : s));
+    
+    try {
+      const dbPatch = {};
+      if (patch.tutorComments !== undefined) dbPatch.tutor_comments = patch.tutorComments;
+      if (patch.studentComments !== undefined) dbPatch.student_comments = patch.studentComments;
+      if (patch.status !== undefined) dbPatch.status = patch.status;
+      if (patch.plannedSummary !== undefined) dbPatch.planned_summary = patch.plannedSummary;
+      
+      // Assessment fields
+      if (patch.ratingTechnique !== undefined) dbPatch.rating_technique = patch.ratingTechnique;
+      if (patch.ratingRhythm !== undefined) dbPatch.rating_rhythm = patch.ratingRhythm;
+      if (patch.ratingTone !== undefined) dbPatch.rating_tone = patch.ratingTone;
+      if (patch.ratingSightReading !== undefined) dbPatch.rating_sight_reading = patch.ratingSightReading;
+      if (patch.ratingExpression !== undefined) dbPatch.rating_expression = patch.ratingExpression;
+      if (patch.ratingFocus !== undefined) dbPatch.rating_focus = patch.ratingFocus;
+      if (patch.assessmentNotes !== undefined) dbPatch.assessment_notes = patch.assessmentNotes;
+      if (patch.assessedAt !== undefined) dbPatch.assessed_at = patch.assessedAt;
+      if (patch.assessedBy !== undefined) dbPatch.assessed_by = patch.assessedBy;
+      
+      await supabase.from('sessions').update(dbPatch).eq('id', id);
+    } catch (error) {
+      console.error('Error updating session:', error);
+    }
+  }
+  
+  function saveRecording(sessionId, rec) {
+    setSessions(prev => prev.map(s => s.id===sessionId ? {...s, recordings:[...s.recordings, rec]} : s));
+  }
+  
+  async function markStatus(sessionId, status) {
+    setSessions(prev => prev.map(s => s.id===sessionId ? {...s, status} : s));
+    try {
+      await supabase.from('sessions').update({ status }).eq('id', sessionId);
+    } catch (error) {
+      console.error('Error marking status:', error);
+    }
+  }
+  
+  async function sendSessionSMS(session, student, tutor, messageType = 'confirmation') {
+    try {
+      // Determine recipient phone - check if student has mobile, otherwise use parent
+      let recipientPhone = student.mobile;
+      let recipientName = student.name;
+      
+      // If student doesn't have mobile or is under 18, send to parent
+      if (!recipientPhone) {
+        const { data: parentData } = await supabase
+          .from('parent_children')
+          .select('parent_id')
+          .eq('child_id', student.id)
+          .single();
+        
+        if (parentData) {
+          const { data: parent } = await supabase
+            .from('users')
+            .select('mobile, name')
+            .eq('id', parentData.parent_id)
+            .single();
+          
+          if (parent && parent.mobile) {
+            recipientPhone = parent.mobile;
+            recipientName = parent.name;
+          }
+        }
+      }
+      
+      if (!recipientPhone) {
+        console.log('No phone number available for SMS');
+        return { success: false, reason: 'no_phone' };
+      }
+      
+      // Call Netlify function to send SMS
+      const response = await fetch('/.netlify/functions/send-sms', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          studentName: student.name,
+          tutorName: tutor.name,
+          instrument: session.instrument,
+          date: session.date,
+          startTime: session.startTime,
+          durationMin: session.durationMin,
+          recipientPhone: recipientPhone,
+          messageType: messageType
+        })
+      });
+      
+      const result = await response.json();
+      
+      if (result.success) {
+        // Log SMS in database
+        await supabase.from('sms_log').insert([{
+          session_id: session.id,
+          recipient_phone: recipientPhone,
+          recipient_name: recipientName,
+          message_type: messageType,
+          message_body: result.message,
+          twilio_sid: result.messageSid,
+          status: 'sent'
+        }]);
+        
+        // Update session SMS tracking
+        if (messageType === 'confirmation') {
+          await supabase.from('sessions').update({
+            sms_confirmation_sent: true,
+            sms_confirmation_sent_at: new Date().toISOString()
+          }).eq('id', session.id);
+        }
+      }
+      
+      return result;
+    } catch (error) {
+      console.error('Error sending SMS:', error);
+      return { success: false, error: error.message };
+    }
+  }
+  
+  async function sendReminder(session) {
+    const student = USERS.find(u => u.id === session.studentId);
+    const tutor = USERS.find(u => u.id === session.tutorId);
+    
+    if (!student || !tutor) {
+      alert('❌ Error: Student or tutor not found');
+      return;
+    }
+    
+    const result = await sendSessionSMS(session, student, tutor, 'reminder');
+    
+    if (result.success) {
+      alert(`✓ Reminder SMS sent to ${student.name}!`);
+      
+      // Update session reminder tracking
+      try {
+        await supabase.from('sessions').update({
+          sms_reminder_sent: true,
+          sms_reminder_sent_at: new Date().toISOString()
+        }).eq('id', session.id);
+      } catch (error) {
+        console.error('Error updating reminder status:', error);
+      }
+    } else {
+      if (result.reason === 'no_phone') {
+        alert('❌ No mobile number available for this student or their parent.');
+      } else {
+        alert(`❌ Failed to send SMS: ${result.error || 'Unknown error'}`);
+      }
+    }
+  }
+  
+  async function sendBroadcast(message, recipients, progressCallback) {
+    const results = [];
+    
+    for (let i = 0; i < recipients.length; i++) {
+      const user = recipients[i];
+      progressCallback(i + 1, recipients.length);
+      
+      try {
+        // Send broadcast SMS via Netlify function
+        const response = await fetch('/.netlify/functions/send-sms', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            studentName: user.name,
+            tutorName: 'Manly Music',
+            instrument: 'Broadcast',
+            date: TODAY,
+            startTime: '12:00',
+            durationMin: 0,
+            recipientPhone: user.mobile,
+            messageType: 'broadcast',
+            broadcastMessage: message // Pass custom message
+          })
+        });
+        
+        const result = await response.json();
+        
+        if (result.success) {
+          // Log broadcast SMS in database
+          await supabase.from('sms_log').insert([{
+            session_id: null,
+            recipient_phone: user.mobile,
+            recipient_name: user.name,
+            message_type: 'broadcast',
+            message_body: message,
+            twilio_sid: result.messageSid,
+            status: 'sent'
+          }]);
+          
+          results.push({ user: user.name, success: true });
+        } else {
+          results.push({ user: user.name, success: false, error: result.error });
+        }
+      } catch (error) {
+        console.error(`Error sending to ${user.name}:`, error);
+        results.push({ user: user.name, success: false, error: error.message });
+      }
+      
+      // Small delay to avoid rate limiting
+      await new Promise(resolve => setTimeout(resolve, 100));
+    }
+    
+    return results;
+  }
+  
+  async function addSession(s) {
+    const newId = Date.now();
+    const newSession = { ...s, id: newId };
+    setSessions(prev => [...prev, newSession]);
+    
+    try {
+      const { data, error } = await supabase.from('sessions').insert([{
+        student_id: s.studentId,
+        tutor_id: s.tutorId,
+        date: s.date,
+        start_time: s.startTime,
+        end_time: s.endTime,
+        duration_min: s.durationMin,
+        instrument: s.instrument,
+        accompaniment: s.accompaniment || '',
+        status: s.status || 'scheduled',
+        planned_summary: s.plannedSummary || ''
+      }]).select();
+      
+      if (!error && data && data[0]) {
+        // Session created successfully - send SMS confirmation
+        const student = USERS.find(u => u.id === s.studentId);
+        const tutor = USERS.find(u => u.id === s.tutorId);
+        
+        if (student && tutor) {
+          const smsResult = await sendSessionSMS(
+            { ...newSession, id: data[0].id }, 
+            student, 
+            tutor, 
+            'confirmation'
+          );
+          
+          if (smsResult.success) {
+            console.log('✓ SMS confirmation sent');
+            alert(`✓ Session booked! SMS confirmation sent to ${student.name}${student.mobile ? ' ('+student.mobile+')' : ''}`);
+          } else {
+            console.log('SMS not sent:', smsResult.reason || smsResult.error);
+            if (smsResult.reason === 'no_phone') {
+              alert('✓ Session booked! (No mobile number available for SMS)');
+            } else {
+              alert('✓ Session booked! (SMS failed to send - check logs)');
+            }
+          }
+        } else {
+          alert('✓ Session booked!');
+        }
+      }
+    } catch (error) {
+      console.error('Error adding session:', error);
+    }
+  }
+  
+  async function togglePay(sessionId, field) {
+    const session = sessions.find(s => s.id === sessionId);
+    if (!session) return;
+    
+    const newValue = !session[field];
+    setSessions(prev => prev.map(s => s.id===sessionId ? {...s, [field]:newValue} : s));
+    
+    try {
+      const dbField = field === 'payrollTutorPaid' ? 'payroll_tutor_paid' :
+                      field === 'paymentReceived' ? 'payment_received' : 'invoiced';
+      await supabase.from('sessions').update({ [dbField]: newValue }).eq('id', sessionId);
+    } catch (error) {
+      console.error('Error toggling payment:', error);
+    }
+  }
+
+  const logout = () => { setUser(null); setLogin(null); };
+
+  if (loading) {
+    return (
+      <div style={{minHeight:'100vh',display:'flex',alignItems:'center',justifyContent:'center',background:'var(--bg)',color:'var(--text2)'}}>
+        <div style={{textAlign:'center'}}>
+          <MMLogo height={60}/>
+          <p style={{marginTop:'1.5rem',fontSize:'.9rem'}}>Loading from database...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!loginType) return <LandingPage onSelectLogin={setLogin}/>;
+  if (!currentUser) return <LoginScreen onLogin={setUser} userType={loginType} onBack={()=>setLogin(null)} users={users}/>;
+
+  const role = currentUser.role;
+  const sharedProps = { sessions, onLogout:logout, onUpdateSession:updateSession, onSaveRecording:saveRecording, onMarkStatus:markStatus, onAddSession:addSession, onSendReminder:sendReminder };
+
+  if (role==='student') return <StudentDashboard user={currentUser} {...sharedProps}/>;
+  if (role==='parent') return <ParentDashboard user={currentUser} sessions={sessions} onLogout={logout}/>;
+  if (role==='tutor') return <TutorDashboard user={currentUser} {...sharedProps}/>;
+  if (role==='admin') return <AdminDashboard user={currentUser} {...sharedProps} onTogglePay={togglePay} onSendBroadcast={sendBroadcast}/>;
+
+  return null;
+}
+
+ReactDOM.render(<App/>, document.getElementById('root'));
+</script>
+</body>
+</html>
