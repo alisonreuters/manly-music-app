@@ -203,7 +203,7 @@ input[type="time"]::-webkit-calendar-picker-indicator {
 ══════════════════════════════════ */
 .session-panel-overlay { position:fixed; inset:0; background:rgba(0,0,0,.5); z-index:300; }
 .session-panel {
-  position:fixed; top:0; right:0; bottom:0; width:min(480px,100vw);
+  position:fixed; top:0; right:0; bottom:0; width:min(75vw,900px);
   background:var(--bg1); border-left:1px solid var(--border2);
   z-index:301; overflow-y:auto;
   animation: slideIn .22s ease;
@@ -211,8 +211,8 @@ input[type="time"]::-webkit-calendar-picker-indicator {
 @keyframes slideIn { from { transform:translateX(100%); } to { transform:translateX(0); } }
 .sp-hdr { padding:1.5rem; border-bottom:1px solid var(--border); display:flex; justify-content:space-between; align-items:flex-start; position:sticky; top:0; background:var(--bg1); z-index:1; }
 .sp-hdr h3 { font-size:1.05rem; font-weight:500; }
-.sp-body { padding:1.5rem; display:flex; flex-direction:column; gap:1.25rem; }
-.sp-section { background:var(--bg2); border:1px solid var(--border); border-radius:var(--radius); padding:1.1rem 1.25rem; }
+.sp-body { padding:2rem; display:flex; flex-direction:column; gap:1.75rem; }
+.sp-section { background:var(--bg2); border:1px solid var(--border); border-radius:var(--radius); padding:1.5rem 1.75rem; }
 .sp-section-title { font-size:.72rem; color:var(--text3); text-transform:uppercase; letter-spacing:.08em; margin-bottom:.75rem; }
 .sp-row { display:flex; justify-content:space-between; align-items:flex-start; gap:1rem; margin-bottom:.5rem; font-size:.88rem; }
 .sp-row:last-child { margin-bottom:0; }
@@ -579,7 +579,7 @@ function SessionPanel({ session, userRole, currentUserId, onClose, onSaveRecordi
             </div>
             {editingSummary ? (
               <div>
-                <textarea className="field" style={{width:'100%',background:'var(--bg3)',border:'1px solid var(--border2)',borderRadius:6,color:'var(--text)',padding:'.7rem',minHeight:80,fontSize:'.88rem'}}
+                <textarea className="field" style={{width:'100%',background:'var(--bg3)',border:'1px solid var(--border2)',borderRadius:6,color:'var(--text)',padding:'1rem',minHeight:120,fontSize:'.92rem'}}
                   value={summary} onChange={e=>setSummary(e.target.value)}/>
                 <div style={{display:'flex',gap:'.5rem',marginTop:'.5rem'}}>
                   <button className="btn btn-sm btn-primary" onClick={saveSummary}>Save</button>
@@ -602,7 +602,7 @@ function SessionPanel({ session, userRole, currentUserId, onClose, onSaveRecordi
               </div>
               {editingTutorComment ? (
                 <div>
-                  <textarea style={{width:'100%',background:'var(--bg3)',border:'1px solid var(--border2)',borderRadius:6,color:'var(--text)',padding:'.7rem',minHeight:80,fontSize:'.88rem',resize:'vertical'}}
+                  <textarea style={{width:'100%',background:'var(--bg3)',border:'1px solid var(--border2)',borderRadius:6,color:'var(--text)',padding:'1rem',minHeight:120,fontSize:'.92rem',resize:'vertical'}}
                     value={tutorComment} onChange={e=>setTutorComment(e.target.value)}/>
                   <div style={{display:'flex',gap:'.5rem',marginTop:'.5rem'}}>
                     <button className="btn btn-sm btn-primary" onClick={saveTutorComment}>Save</button>
@@ -626,7 +626,7 @@ function SessionPanel({ session, userRole, currentUserId, onClose, onSaveRecordi
               </div>
               {editingStudentComment ? (
                 <div>
-                  <textarea style={{width:'100%',background:'var(--bg3)',border:'1px solid var(--border2)',borderRadius:6,color:'var(--text)',padding:'.7rem',minHeight:80,fontSize:'.88rem',resize:'vertical'}}
+                  <textarea style={{width:'100%',background:'var(--bg3)',border:'1px solid var(--border2)',borderRadius:6,color:'var(--text)',padding:'1rem',minHeight:120,fontSize:'.92rem',resize:'vertical'}}
                     value={studentComment} onChange={e=>setStudentComment(e.target.value)}/>
                   <div style={{display:'flex',gap:'.5rem',marginTop:'.5rem'}}>
                     <button className="btn btn-sm btn-primary" onClick={saveStudentComment}>Save</button>
@@ -1465,20 +1465,121 @@ function AppHeader({ title, sub, onLogout }) {
 ══════════════════════════════════════════════════ */
 function StudentDashboard({ user, sessions, onLogout, onUpdateSession, onSaveRecording }) {
   const [activeSession, setActiveSession] = useState(null);
+  const [editingTagline, setEditingTagline] = useState(false);
+  const [tagline, setTagline] = useState(
+    localStorage.getItem(`tagline_${user.id}`) || 'Music Student'
+  );
+  
   const mySessions = sessions.filter(s=>s.studentId===user.id).sort((a,b)=>a.date.localeCompare(b.date));
   const attended   = mySessions.filter(s=>s.status==='attended').length;
   const upcoming   = mySessions.filter(s=>s.status==='scheduled').length;
   const myTasks    = TASKS.filter(t=>t.studentId===user.id);
 
+  function saveTagline() {
+    localStorage.setItem(`tagline_${user.id}`, tagline);
+    setEditingTagline(false);
+  }
+
   return (
     <div>
-      <AppHeader title={`Welcome, ${user.name}!`} sub="Student Dashboard" onLogout={onLogout}/>
+      {/* Custom Hero Header */}
+      <div style={{
+        background: 'linear-gradient(135deg, var(--bg1) 0%, var(--bg2) 100%)',
+        borderBottom: '1px solid var(--border)',
+        padding: '2.5rem 2rem 2rem'
+      }}>
+        <div style={{maxWidth: '1400px', margin: '0 auto', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start'}}>
+          <div>
+            <div style={{display: 'flex', alignItems: 'center', gap: '1.5rem', marginBottom: '.5rem'}}>
+              <MMLogo small wordmark={false}/>
+              <h1 style={{
+                fontSize: '2.5rem',
+                fontWeight: 600,
+                background: 'linear-gradient(135deg, var(--accent) 0%, #4CAF50 100%)',
+                WebkitBackgroundClip: 'text',
+                WebkitTextFillColor: 'transparent',
+                margin: 0
+              }}>
+                Welcome, {user.name}!
+              </h1>
+            </div>
+            
+            {/* Editable Tagline */}
+            <div style={{marginLeft: '4.5rem'}}>
+              {editingTagline ? (
+                <div style={{display: 'flex', gap: '.5rem', alignItems: 'center'}}>
+                  <input 
+                    type="text"
+                    value={tagline}
+                    onChange={e => setTagline(e.target.value)}
+                    placeholder="Your tagline..."
+                    style={{
+                      background: 'var(--bg3)',
+                      border: '1px solid var(--border2)',
+                      borderRadius: '6px',
+                      color: 'var(--text)',
+                      padding: '.4rem .8rem',
+                      fontSize: '1rem',
+                      outline: 'none',
+                      maxWidth: '300px'
+                    }}
+                    onFocus={e => e.target.style.borderColor = 'var(--accent)'}
+                    onBlur={e => e.target.style.borderColor = 'var(--border2)'}
+                    autoFocus
+                  />
+                  <button className="btn btn-sm btn-primary" onClick={saveTagline}>Save</button>
+                  <button className="btn btn-sm" onClick={() => {
+                    setTagline(localStorage.getItem(`tagline_${user.id}`) || 'Music Student');
+                    setEditingTagline(false);
+                  }}>Cancel</button>
+                </div>
+              ) : (
+                <div 
+                  style={{
+                    fontSize: '1.1rem',
+                    fontStyle: 'italic',
+                    color: 'var(--text2)',
+                    cursor: 'pointer',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '.5rem',
+                    padding: '.2rem .5rem',
+                    borderRadius: '4px',
+                    transition: 'background 0.2s'
+                  }}
+                  onClick={() => setEditingTagline(true)}
+                  onMouseEnter={e => e.currentTarget.style.background = 'var(--bg3)'}
+                  onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
+                  title="Click to edit your tagline"
+                >
+                  "{tagline}" <span style={{fontSize: '.9rem', opacity: 0.6}}>✏️</span>
+                </div>
+              )}
+            </div>
+          </div>
+          
+          <button className="btn" onClick={onLogout} style={{marginTop: '.5rem'}}>Logout</button>
+        </div>
+      </div>
+      
       <div className="dashboard">
-        <div className="stats-grid">
+        {/* Smaller Stats */}
+        <div style={{
+          display: 'grid',
+          gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))',
+          gap: '.75rem',
+          marginBottom: '1.5rem'
+        }}>
           {[['Sessions Attended',attended,'var(--green)'],['Upcoming',upcoming,null],['Tasks',myTasks.length,null],['Completed',myTasks.filter(t=>t.status==='completed').length,'var(--green)']].map(([l,v,c])=>(
-            <div key={l} className="stat-card">
-              <div className="stat-val" style={c?{color:c}:{}}>{v}</div>
-              <div className="stat-lbl">{l}</div>
+            <div key={l} style={{
+              background: 'var(--bg2)',
+              border: '1px solid var(--border)',
+              borderRadius: '8px',
+              padding: '.75rem 1rem',
+              textAlign: 'center'
+            }}>
+              <div style={{fontSize: '1.5rem', fontWeight: 600, color: c || 'var(--text)'}}>{v}</div>
+              <div style={{fontSize: '.75rem', color: 'var(--text3)', textTransform: 'uppercase', letterSpacing: '.05em', marginTop: '.2rem'}}>{l}</div>
             </div>
           ))}
         </div>
@@ -1548,13 +1649,59 @@ function ParentDashboard({ user, sessions, onLogout }) {
 
   return (
     <div>
-      <AppHeader title="Parent Dashboard" sub={`${child?.name}'s Progress`} onLogout={onLogout}/>
+      {/* Custom Hero Header */}
+      <div style={{
+        background: 'linear-gradient(135deg, var(--bg1) 0%, var(--bg2) 100%)',
+        borderBottom: '1px solid var(--border)',
+        padding: '2.5rem 2rem 2rem'
+      }}>
+        <div style={{maxWidth: '1400px', margin: '0 auto', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start'}}>
+          <div>
+            <div style={{display: 'flex', alignItems: 'center', gap: '1.5rem', marginBottom: '.5rem'}}>
+              <MMLogo small wordmark={false}/>
+              <h1 style={{
+                fontSize: '2.5rem',
+                fontWeight: 600,
+                background: 'linear-gradient(135deg, var(--accent) 0%, #4CAF50 100%)',
+                WebkitBackgroundClip: 'text',
+                WebkitTextFillColor: 'transparent',
+                margin: 0
+              }}>
+                Welcome, {user.name}!
+              </h1>
+            </div>
+            <div style={{
+              marginLeft: '4.5rem',
+              fontSize: '1.1rem',
+              fontStyle: 'italic',
+              color: 'var(--text2)'
+            }}>
+              {child?.name}'s Progress
+            </div>
+          </div>
+          
+          <button className="btn" onClick={onLogout} style={{marginTop: '.5rem'}}>Logout</button>
+        </div>
+      </div>
+      
       <div className="dashboard">
-        <div className="stats-grid">
+        {/* Smaller Stats */}
+        <div style={{
+          display: 'grid',
+          gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))',
+          gap: '.75rem',
+          marginBottom: '1.5rem'
+        }}>
           {[['Sessions',attended,'var(--green)'],['Missed',missed,missed>0?'var(--red)':null],['Upcoming',childSessions.filter(s=>s.status==='scheduled').length,null],['Attendance Rate',rate!==null?rate+'%':'—',null]].map(([l,v,c])=>(
-            <div key={l} className="stat-card">
-              <div className="stat-val" style={c?{color:c}:{}}>{v}</div>
-              <div className="stat-lbl">{l}</div>
+            <div key={l} style={{
+              background: 'var(--bg2)',
+              border: '1px solid var(--border)',
+              borderRadius: '8px',
+              padding: '.75rem 1rem',
+              textAlign: 'center'
+            }}>
+              <div style={{fontSize: '1.5rem', fontWeight: 600, color: c || 'var(--text)'}}>{v}</div>
+              <div style={{fontSize: '.75rem', color: 'var(--text3)', textTransform: 'uppercase', letterSpacing: '.05em', marginTop: '.2rem'}}>{l}</div>
             </div>
           ))}
         </div>
@@ -1586,6 +1733,160 @@ function ParentDashboard({ user, sessions, onLogout }) {
           onUpdateSession={()=>{}}
           onMarkStatus={()=>{}}
         />
+      )}
+    </div>
+  );
+}
+
+/* ══════════════════════════════════════════════════
+   TUTOR SESSIONS LIST VIEW
+══════════════════════════════════════════════════ */
+function TutorSessionsList({ sessions, onSelectSession, onMarkStatus }) {
+  const upcomingSessions = sessions.filter(s => s.status === 'scheduled').sort((a,b) => a.date.localeCompare(b.date) || a.startTime.localeCompare(b.startTime));
+  const completedSessions = sessions.filter(s => s.status === 'attended').sort((a,b) => b.date.localeCompare(a.date) || b.startTime.localeCompare(a.startTime));
+  const cancelledSessions = sessions.filter(s => s.status === 'cancelled').sort((a,b) => b.date.localeCompare(a.date));
+  const missedSessions = sessions.filter(s => s.status === 'missed').sort((a,b) => b.date.localeCompare(a.date));
+
+  function SessionRow({ session, showQuickActions }) {
+    const student = USERS.find(u => u.id === session.studentId);
+    
+    return (
+      <div 
+        style={{
+          padding: '1rem',
+          borderBottom: '1px solid var(--border)',
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          gap: '1rem',
+          cursor: 'pointer',
+          transition: 'background 0.2s'
+        }}
+        onMouseEnter={e => e.currentTarget.style.background = 'var(--bg2)'}
+        onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
+        onClick={() => onSelectSession(session)}
+      >
+        <div style={{flex: 1}}>
+          <div style={{display: 'flex', gap: '1rem', alignItems: 'center', marginBottom: '.3rem'}}>
+            <span style={{fontSize: '.95rem', fontWeight: 500, color: 'var(--text)'}}>{fmtDate(session.date)}</span>
+            <span style={{fontSize: '.9rem', color: 'var(--text2)'}}>{fmtTime(session.startTime)} - {fmtTime(session.endTime)}</span>
+            <span className={statusClass(session.status)}>{session.status}</span>
+          </div>
+          <div style={{fontSize: '.9rem', color: 'var(--text2)'}}>
+            {student?.name} • {session.instrument} • {session.durationMin} min
+          </div>
+          {session.plannedSummary && (
+            <div style={{fontSize: '.85rem', color: 'var(--text3)', marginTop: '.3rem'}}>
+              {session.plannedSummary}
+            </div>
+          )}
+        </div>
+        
+        {showQuickActions && (
+          <div style={{display: 'flex', gap: '.4rem'}} onClick={e => e.stopPropagation()}>
+            <button 
+              className="btn btn-sm btn-green" 
+              onClick={() => onMarkStatus(session.id, 'attended')}
+              title="Mark as attended"
+            >
+              ✓ Attended
+            </button>
+            <button 
+              className="btn btn-sm btn-red" 
+              onClick={() => onMarkStatus(session.id, 'missed')}
+              title="Mark as missed"
+            >
+              ✗ Missed
+            </button>
+            <button 
+              className="btn btn-sm btn-amber" 
+              onClick={() => onMarkStatus(session.id, 'cancelled')}
+              title="Cancel session"
+            >
+              Cancel
+            </button>
+          </div>
+        )}
+        
+        {session.status === 'cancelled' && (
+          <div onClick={e => e.stopPropagation()}>
+            <button 
+              className="btn btn-sm btn-blue" 
+              onClick={() => onMarkStatus(session.id, 'scheduled')}
+              title="Re-open this time slot"
+            >
+              ↻ Re-open Slot
+            </button>
+          </div>
+        )}
+      </div>
+    );
+  }
+
+  return (
+    <div style={{display: 'flex', flexDirection: 'column', gap: '1.5rem'}}>
+      {/* Upcoming Sessions */}
+      {upcomingSessions.length > 0 && (
+        <div className="card">
+          <div className="card-hdr">
+            <div className="card-title">Upcoming Sessions ({upcomingSessions.length})</div>
+          </div>
+          {upcomingSessions.map(s => (
+            <SessionRow key={s.id} session={s} showQuickActions={true} />
+          ))}
+        </div>
+      )}
+
+      {/* Completed Sessions */}
+      {completedSessions.length > 0 && (
+        <div className="card">
+          <div className="card-hdr">
+            <div className="card-title">Completed Sessions ({completedSessions.length})</div>
+          </div>
+          {completedSessions.slice(0, 10).map(s => (
+            <SessionRow key={s.id} session={s} showQuickActions={false} />
+          ))}
+          {completedSessions.length > 10 && (
+            <div style={{padding: '.75rem', textAlign: 'center', fontSize: '.85rem', color: 'var(--text3)'}}>
+              Showing 10 most recent • {completedSessions.length - 10} more
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Cancelled Sessions */}
+      {cancelledSessions.length > 0 && (
+        <div className="card">
+          <div className="card-hdr">
+            <div className="card-title">Cancelled Sessions ({cancelledSessions.length})</div>
+          </div>
+          {cancelledSessions.slice(0, 5).map(s => (
+            <SessionRow key={s.id} session={s} showQuickActions={false} />
+          ))}
+          {cancelledSessions.length > 5 && (
+            <div style={{padding: '.75rem', textAlign: 'center', fontSize: '.85rem', color: 'var(--text3)'}}>
+              Showing 5 most recent • {cancelledSessions.length - 5} more
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Missed Sessions */}
+      {missedSessions.length > 0 && (
+        <div className="card">
+          <div className="card-hdr">
+            <div className="card-title">Missed Sessions ({missedSessions.length})</div>
+          </div>
+          {missedSessions.slice(0, 5).map(s => (
+            <SessionRow key={s.id} session={s} showQuickActions={false} />
+          ))}
+        </div>
+      )}
+
+      {sessions.length === 0 && (
+        <div className="card" style={{padding: '2rem', textAlign: 'center', color: 'var(--text3)'}}>
+          No sessions found
+        </div>
       )}
     </div>
   );
@@ -1631,6 +1932,7 @@ function TutorDashboard({ user, sessions, onLogout, onUpdateSession, onSaveRecor
           </div>
           <div style={{display:'flex',gap:'.5rem'}}>
             <button className={`btn btn-sm${view==='calendar'?' btn-primary':''}`} onClick={()=>setView('calendar')}>Calendar</button>
+            <button className={`btn btn-sm${view==='list'?' btn-primary':''}`} onClick={()=>setView('list')}>Sessions List</button>
             <button className={`btn btn-sm${view==='roster'?' btn-primary':''}`} onClick={()=>setView('roster')}>My Schedule</button>
             <button className="btn btn-primary btn-sm" onClick={()=>setShowSchedule(true)}>+ Schedule Session</button>
           </div>
@@ -1638,6 +1940,8 @@ function TutorDashboard({ user, sessions, onLogout, onUpdateSession, onSaveRecor
 
         {view==='calendar' ? (
           <AttendanceCalendar sessions={mySessions} userRole="tutor" currentUserId={user.id} onSelectSession={setActiveSession}/>
+        ) : view==='list' ? (
+          <TutorSessionsList sessions={mySessions} onSelectSession={setActiveSession} onMarkStatus={onMarkStatus}/>
         ) : (
           <TutorRoster sessions={sessions} currentUserId={user.id} userRole="tutor"/>
         )}
