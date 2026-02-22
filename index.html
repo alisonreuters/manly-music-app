@@ -705,7 +705,6 @@ function AttendanceCalendar({ sessions, userRole, currentUserId, filterStudentId
   const todayDate = new Date(2026, 1, 17);
   const [date, setDate] = useState(new Date(2026, 1, 1));
   const [flyoutDate, setFlyoutDate] = useState(null); // Track which day's flyout is open
-  const [flyoutPosition, setFlyoutPosition] = useState({ x: 0, y: 0 });
 
   const year = date.getFullYear(), month = date.getMonth();
 
@@ -732,12 +731,7 @@ function AttendanceCalendar({ sessions, userRole, currentUserId, filterStudentId
       // Single session - open directly
       onSelectSession(recs[0]);
     } else {
-      // Multiple sessions - show flyout
-      const rect = event.currentTarget.getBoundingClientRect();
-      setFlyoutPosition({ 
-        x: rect.left + rect.width / 2, 
-        y: rect.bottom + 5 
-      });
+      // Multiple sessions - show flyout in top-right
       setFlyoutDate(dateStr);
     }
   }
@@ -835,17 +829,18 @@ function AttendanceCalendar({ sessions, userRole, currentUserId, filterStudentId
           <div
             style={{
               position: 'fixed',
-              left: `${flyoutPosition.x}px`,
-              top: `${flyoutPosition.y}px`,
-              transform: 'translateX(-50%)',
+              right: '2rem',
+              top: '6rem',
               background: 'var(--bg1)',
               border: '2px solid var(--accent)',
               borderRadius: '8px',
               boxShadow: '0 4px 20px rgba(0,0,0,0.3)',
               padding: '0.5rem',
               zIndex: 101,
-              minWidth: '280px',
-              maxWidth: '400px'
+              minWidth: '320px',
+              maxWidth: '450px',
+              maxHeight: 'calc(100vh - 8rem)',
+              overflowY: 'auto'
             }}
             onClick={e => e.stopPropagation()}
           >
@@ -1167,7 +1162,7 @@ function BroadcastModal({ onClose, onSend }) {
 /* ══════════════════════════════════════════════════
    BROADCAST EMAIL MODAL
 ══════════════════════════════════════════════════ */
-function BroadcastEmailModal({ onClose }) {
+function BroadcastEmailModal({ onClose, adminEmail }) {
   const [subject, setSubject] = useState('');
   const [message, setMessage] = useState('');
   const [recipientType, setRecipientType] = useState('all_students'); // 'all_students' | 'all_parents' | 'all_users'
@@ -1188,17 +1183,17 @@ function BroadcastEmailModal({ onClose }) {
       return;
     }
     
-    // Create BCC mailto link
+    // Create mailto link: To = admin (for receipt), BCC = all recipients
     const emailList = recipientsWithEmails.map(u => u.email).join(',');
     const encodedSubject = encodeURIComponent(subject);
     const encodedBody = encodeURIComponent(message);
     
-    // Open mailto link (BCC to hide recipients from each other)
-    const mailtoLink = `mailto:?bcc=${emailList}&subject=${encodedSubject}&body=${encodedBody}`;
+    // Address to admin for receipt, BCC everyone else
+    const mailtoLink = `mailto:${adminEmail}?bcc=${emailList}&subject=${encodedSubject}&body=${encodedBody}`;
     
     window.location.href = mailtoLink;
     
-    alert(`✓ Opening your email client with ${recipientsWithEmails.length} recipients in BCC.\n\nNote: You may need to click "Send" in your email client to complete the broadcast.`);
+    alert(`✓ Opening your email client.\n\nTo: You (${adminEmail})\nBCC: ${recipientsWithEmails.length} recipients\n\nYou'll receive a copy as confirmation that the broadcast was sent.`);
     onClose();
   }
 
@@ -1249,7 +1244,7 @@ function BroadcastEmailModal({ onClose }) {
           )}
           
           <div style={{padding:'.75rem',background:'var(--bg3)',border:'1px solid var(--accent)',borderRadius:'6px',fontSize:'.85rem',color:'var(--text2)'}}>
-            💡 <b>How it works:</b> Clicking "Send Email" will open your email client (Outlook, Gmail, Apple Mail, etc.) with all recipients in BCC. You'll need to click Send in your email client to complete the broadcast.
+            💡 <b>How it works:</b> The email will be addressed to YOU with all recipients in BCC (hidden). This way you get a copy as confirmation the broadcast was sent, and recipients' privacy is protected.
           </div>
         </div>
         <div className="modal-footer">
@@ -2339,6 +2334,7 @@ function AdminDashboard({ user, sessions, onLogout, onUpdateSession, onSaveRecor
       {showBroadcastEmail && (
         <BroadcastEmailModal
           onClose={()=>setShowBroadcastEmail(false)}
+          adminEmail={user.email}
         />
       )}
     </div>
