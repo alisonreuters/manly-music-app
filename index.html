@@ -738,14 +738,16 @@ function AttendanceCalendar({ sessions, userRole, currentUserId, filterStudentId
   function handleDayClick(recs, dateStr, event) {
     if (recs.length === 0) return;
     
+    // If flyout is currently open, close it and don't open anything else
+    // User needs to click again to open the session
+    if (flyoutDate) {
+      closeFlyout();
+      return;
+    }
+    
     if (recs.length === 1) {
-      // Single session - close flyout first with small delay to ensure React updates
-      if (flyoutDate) {
-        closeFlyout();
-        setTimeout(() => onSelectSession(recs[0]), 50);
-      } else {
-        onSelectSession(recs[0]);
-      }
+      // Single session - open directly
+      onSelectSession(recs[0]);
     } else {
       // Multiple sessions - show flyout in top-right
       setFlyoutDate(dateStr);
