@@ -3,6 +3,9 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Expires" content="0">
 <title>Manly Music — Portal V5 — Live Database</title>
 <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
 <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
@@ -508,13 +511,14 @@ function RecordingSection({ session, canRecord, userRole, onSaveRecording }) {
 /* ══════════════════════════════════════════════════
    SESSION DETAIL PANEL
 ══════════════════════════════════════════════════ */
-function SessionPanel({ session, userRole, currentUserId, onClose, onSaveRecording, onUpdateSession, onMarkStatus }) {
+function SessionPanel({ session, userRole, currentUserId, onClose, onSaveRecording, onUpdateSession, onMarkStatus, onSendReminder }) {
   const [editingTutorComment,   setEditTC]    = useState(false);
   const [editingStudentComment, setEditSC]    = useState(false);
   const [tutorComment,  setTutorComment]      = useState(session.tutorComments);
   const [studentComment,setStudentComment]    = useState(session.studentComments);
   const [editingSummary, setEditSummary]      = useState(false);
   const [summary, setSummary]                 = useState(session.plannedSummary);
+  const [sendingReminder, setSendingReminder] = useState(false);
 
   const isCompleted  = session.status === 'attended';
   const isScheduled  = session.status === 'scheduled';
@@ -664,6 +668,28 @@ function SessionPanel({ session, userRole, currentUserId, onClose, onSaveRecordi
             </div>
           )}
 
+          {/* ── Send Reminder SMS (tutor/admin, scheduled only) ── */}
+          {isTutorAdmin && isScheduled && onSendReminder && (
+            <div className="sp-section">
+              <div className="sp-section-title" style={{marginBottom:'.75rem'}}>SMS Reminder</div>
+              <button 
+                className="btn btn-sm btn-primary" 
+                onClick={async () => {
+                  setSendingReminder(true);
+                  await onSendReminder(session);
+                  setSendingReminder(false);
+                }}
+                disabled={sendingReminder}
+                style={{opacity: sendingReminder ? 0.6 : 1}}
+              >
+                {sendingReminder ? '📤 Sending...' : '📱 Send Reminder SMS'}
+              </button>
+              <p style={{fontSize:'.82rem',color:'var(--text3)',marginTop:'.5rem'}}>
+                Sends "Your lesson starts in 2 hours" reminder to student/parent
+              </p>
+            </div>
+          )}
+
         </div>
       </div>
     </>
@@ -771,7 +797,7 @@ function AttendanceCalendar({ sessions, userRole, currentUserId, filterStudentId
 /* ══════════════════════════════════════════════════
    SCHEDULE SESSION MODAL (tutor / admin)
 ══════════════════════════════════════════════════ */
-function ScheduleModal({ onClose, onSave, currentUserId, userRole }) {
+function ScheduleModal({ onClose, onSave, currentUserId, userRole, sessions }) {
   const students = USERS.filter(u=>u.role==='student');
   const tutors   = USERS.filter(u=>u.role==='tutor');
   const [form, setForm] = useState({
@@ -793,14 +819,38 @@ function ScheduleModal({ onClose, onSave, currentUserId, userRole }) {
   }
 
   function handleSave() {
-    // Validate date is not in the past
-    const today = new Date().toISOString().split('T')[0];
-    if (form.date < today) {
-      alert('Cannot book sessions in the past. Please select today or a future date.');
+    // Validate date+time is not in the past
+    const now = new Date();
+    const selectedDateTime = new Date(`${form.date}T${form.startTime}`);
+    
+    if (selectedDateTime < now) {
+      alert('Cannot book sessions in the past. Please select a future date and time.');
       return;
     }
     
+    // Check for tutor time conflicts
     const endTime = calcEnd(form.startTime, form.durationMin);
+    const conflict = sessions?.find(s => {
+      if (s.tutorId !== parseInt(form.tutorId)) return false;
+      if (s.date !== form.date) return false;
+      if (s.status === 'cancelled') return false;
+      
+      // Check if times overlap
+      const existingStart = s.startTime;
+      const existingEnd = s.endTime;
+      
+      // Overlap if: new starts before existing ends AND new ends after existing starts
+      const overlap = (form.startTime < existingEnd) && (endTime > existingStart);
+      return overlap;
+    });
+    
+    if (conflict) {
+      const conflictTutor = USERS.find(u => u.id === conflict.tutorId);
+      const conflictStudent = USERS.find(u => u.id === conflict.studentId);
+      alert(`⚠️ TIME CONFLICT!\n\n${conflictTutor?.name} already has a session with ${conflictStudent?.name} at ${fmtTime(conflict.startTime)} - ${fmtTime(conflict.endTime)} on this date.\n\nPlease choose a different time.`);
+      return;
+    }
+    
     onSave({
       id: 's'+Date.now(),
       studentId: parseInt(form.studentId),
@@ -896,6 +946,115 @@ function ScheduleModal({ onClose, onSave, currentUserId, userRole }) {
         <div className="modal-footer">
           <button className="btn" onClick={onClose}>Cancel</button>
           <button className="btn btn-primary" onClick={handleSave}>Schedule Session</button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ══════════════════════════════════════════════════
+   BROADCAST SMS MODAL
+══════════════════════════════════════════════════ */
+function BroadcastModal({ onClose, onSend }) {
+  const [message, setMessage] = useState('');
+  const [recipientType, setRecipientType] = useState('all_students'); // 'all_students' | 'all_parents' | 'all_users'
+  const [sending, setSending] = useState(false);
+  const [progress, setProgress] = useState({ current: 0, total: 0 });
+
+  // Calculate recipients
+  const students = USERS.filter(u => u.role === 'student');
+  const parents = USERS.filter(u => u.role === 'parent');
+  const allUsers = [...students, ...parents];
+  
+  const recipients = recipientType === 'all_students' ? students :
+                     recipientType === 'all_parents' ? parents : allUsers;
+  
+  const recipientsWithMobiles = recipients.filter(u => u.mobile);
+  
+  async function handleSend() {
+    if (!message.trim()) {
+      alert('Please enter a message');
+      return;
+    }
+    
+    if (!confirm(`Send SMS to ${recipientsWithMobiles.length} recipients?\n\nThis will use Twilio credits.`)) {
+      return;
+    }
+    
+    setSending(true);
+    setProgress({ current: 0, total: recipientsWithMobiles.length });
+    
+    const results = await onSend(message, recipientsWithMobiles, (current, total) => {
+      setProgress({ current, total });
+    });
+    
+    setSending(false);
+    
+    const successCount = results.filter(r => r.success).length;
+    const failCount = results.filter(r => !r.success).length;
+    
+    alert(`✓ Broadcast complete!\n\n✅ Sent: ${successCount}\n❌ Failed: ${failCount}\n\nCheck sms_log table for details.`);
+    onClose();
+  }
+
+  return (
+    <div className="modal-overlay">
+      <div className="modal-box" style={{maxWidth:'600px'}}>
+        <div className="modal-hdr">
+          <h3>📢 Broadcast SMS</h3>
+          <button className="btn btn-sm" onClick={onClose} disabled={sending}>✕</button>
+        </div>
+        <div className="modal-body">
+          <div className="field">
+            <label>Recipients</label>
+            <select value={recipientType} onChange={e=>setRecipientType(e.target.value)} disabled={sending}>
+              <option value="all_students">All Students ({students.filter(u=>u.mobile).length} with mobiles)</option>
+              <option value="all_parents">All Parents ({parents.filter(u=>u.mobile).length} with mobiles)</option>
+              <option value="all_users">All Students + Parents ({allUsers.filter(u=>u.mobile).length} with mobiles)</option>
+            </select>
+          </div>
+          
+          <div className="field">
+            <label>Message</label>
+            <textarea 
+              value={message} 
+              onChange={e=>setMessage(e.target.value)}
+              placeholder="Type your broadcast message here..."
+              disabled={sending}
+              style={{minHeight:'120px'}}
+            />
+            <div style={{fontSize:'.8rem',color:'var(--text3)',marginTop:'.3rem'}}>
+              {message.length} characters • Will send to {recipientsWithMobiles.length} recipients
+            </div>
+          </div>
+          
+          {recipientsWithMobiles.length < recipients.length && (
+            <div style={{padding:'.75rem',background:'var(--bg3)',border:'1px solid var(--border2)',borderRadius:'6px',fontSize:'.85rem',color:'var(--text3)'}}>
+              ⚠️ Note: {recipients.length - recipientsWithMobiles.length} {recipientType === 'all_students' ? 'students' : recipientType === 'all_parents' ? 'parents' : 'users'} have no mobile number and will be skipped.
+            </div>
+          )}
+          
+          {sending && (
+            <div style={{padding:'1rem',background:'var(--bg3)',border:'1px solid var(--border2)',borderRadius:'6px'}}>
+              <div style={{fontSize:'.9rem',color:'var(--text2)',marginBottom:'.5rem'}}>
+                📤 Sending... {progress.current} / {progress.total}
+              </div>
+              <div style={{background:'var(--bg2)',height:'8px',borderRadius:'4px',overflow:'hidden'}}>
+                <div style={{
+                  background:'var(--accent)',
+                  height:'100%',
+                  width:`${progress.total > 0 ? (progress.current / progress.total * 100) : 0}%`,
+                  transition:'width 0.3s ease'
+                }}/>
+              </div>
+            </div>
+          )}
+        </div>
+        <div className="modal-footer">
+          <button className="btn" onClick={onClose} disabled={sending}>Cancel</button>
+          <button className="btn btn-primary" onClick={handleSend} disabled={sending || !message.trim()}>
+            {sending ? '📤 Sending...' : '📢 Send Broadcast'}
+          </button>
         </div>
       </div>
     </div>
@@ -1510,6 +1669,7 @@ function TutorDashboard({ user, sessions, onLogout, onUpdateSession, onSaveRecor
           onSaveRecording={onSaveRecording}
           onUpdateSession={onUpdateSession}
           onMarkStatus={onMarkStatus}
+          onSendReminder={sendReminder}
         />
       )}
       {showSchedule && (
@@ -1518,6 +1678,7 @@ function TutorDashboard({ user, sessions, onLogout, onUpdateSession, onSaveRecor
           onSave={onAddSession}
           currentUserId={user.id}
           userRole="tutor"
+          sessions={sessions}
         />
       )}
     </div>
@@ -1527,14 +1688,39 @@ function TutorDashboard({ user, sessions, onLogout, onUpdateSession, onSaveRecor
 /* ══════════════════════════════════════════════════
    ADMIN DASHBOARD
 ══════════════════════════════════════════════════ */
-function AdminDashboard({ user, sessions, onLogout, onUpdateSession, onSaveRecording, onMarkStatus, onAddSession, onTogglePay }) {
+function AdminDashboard({ user, sessions, onLogout, onUpdateSession, onSaveRecording, onMarkStatus, onAddSession, onTogglePay, onSendBroadcast }) {
   const [activeSession, setActiveSession] = useState(null);
   const [showSchedule,  setShowSchedule]  = useState(false);
+  const [showBroadcast, setShowBroadcast] = useState(false);
   const [filterStudent, setFilterStudent] = useState('all');
   const [view, setView]                   = useState('calendar'); // 'calendar' | 'list'
+  const [searchQuery, setSearchQuery]     = useState('');
 
   const students = USERS.filter(u=>u.role==='student').sort((a,b)=>a.name.split(' ').pop().localeCompare(b.name.split(' ').pop()));
-  const visibleSessions = sessions.filter(s => filterStudent==='all' || s.studentId===parseInt(filterStudent));
+  
+  // Filter students by search query (wildcard search on first name or surname)
+  const filteredStudents = students.filter(s => {
+    if (!searchQuery.trim()) return true;
+    const query = searchQuery.toLowerCase();
+    const nameParts = s.name.toLowerCase().split(' ');
+    const firstName = nameParts[0];
+    const surname = nameParts[nameParts.length - 1];
+    return firstName.includes(query) || surname.includes(query) || s.name.toLowerCase().includes(query);
+  });
+  
+  const visibleSessions = sessions.filter(s => {
+    if (filterStudent !== 'all' && s.studentId !== parseInt(filterStudent)) return false;
+    if (searchQuery.trim()) {
+      const student = USERS.find(u => u.id === s.studentId);
+      if (!student) return false;
+      const query = searchQuery.toLowerCase();
+      const nameParts = student.name.toLowerCase().split(' ');
+      const firstName = nameParts[0];
+      const surname = nameParts[nameParts.length - 1];
+      return firstName.includes(query) || surname.includes(query) || student.name.toLowerCase().includes(query);
+    }
+    return true;
+  });
 
   const attended = sessions.filter(s=>s.status==='attended').length;
   const missed   = sessions.filter(s=>s.status==='missed').length;
@@ -1562,11 +1748,38 @@ function AdminDashboard({ user, sessions, onLogout, onUpdateSession, onSaveRecor
 
         {/* toolbar */}
         <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:'1rem',flexWrap:'wrap',gap:'.75rem'}}>
-          <div style={{display:'flex',gap:'.5rem',flexWrap:'wrap',alignItems:'center'}}>
-            <div className="cal-filter" style={{margin:0}}>
-              <button className={`filter-btn${filterStudent==='all'?' active':''}`} onClick={()=>setFilterStudent('all')}>All Students</button>
-              {students.map(s=>(
-                <button key={s.id} className={`filter-btn${filterStudent===String(s.id)?' active':''}`} onClick={()=>setFilterStudent(String(s.id))}>{s.name}</button>
+          <div style={{display:'flex',gap:'.75rem',flexWrap:'wrap',alignItems:'center',flex:1}}>
+            {/* Search Field */}
+            <input 
+              type="text" 
+              placeholder="🔍 Search students (name or surname)..." 
+              value={searchQuery}
+              onChange={e => {
+                setSearchQuery(e.target.value);
+                setFilterStudent('all'); // Reset filter when searching
+              }}
+              style={{
+                background:'var(--bg2)',
+                border:'1px solid var(--border2)',
+                borderRadius:'6px',
+                color:'var(--text)',
+                padding:'.6rem 1rem',
+                fontSize:'.9rem',
+                outline:'none',
+                minWidth:'250px',
+                flex:'0 1 auto'
+              }}
+              onFocus={e => e.target.style.borderColor = 'var(--accent)'}
+              onBlur={e => e.target.style.borderColor = 'var(--border2)'}
+            />
+            
+            {/* Student Filter Buttons */}
+            <div className="cal-filter" style={{margin:0,flex:'1 1 auto'}}>
+              <button className={`filter-btn${filterStudent==='all'?' active':''}`} onClick={()=>{setFilterStudent('all');setSearchQuery('');}}>All Students</button>
+              {filteredStudents.map(s=>(
+                <button key={s.id} className={`filter-btn${filterStudent===String(s.id)?' active':''}`} onClick={()=>{setFilterStudent(String(s.id));setSearchQuery('');}}>
+                  {s.name}
+                </button>
               ))}
             </div>
           </div>
@@ -1574,6 +1787,7 @@ function AdminDashboard({ user, sessions, onLogout, onUpdateSession, onSaveRecor
             <button className={`btn btn-sm${view==='calendar'?' btn-primary':''}`} onClick={()=>setView('calendar')}>Calendar</button>
             <button className={`btn btn-sm${view==='list'?' btn-primary':''}`} onClick={()=>setView('list')}>Day List</button>
             <button className={`btn btn-sm${view==='roster'?' btn-primary':''}`} onClick={()=>setView('roster')}>Tutor Roster</button>
+            <button className="btn btn-amber btn-sm" onClick={()=>setShowBroadcast(true)}>📢 Broadcast SMS</button>
             <button className="btn btn-primary btn-sm" onClick={()=>setShowSchedule(true)}>+ Schedule</button>
           </div>
         </div>
@@ -1596,6 +1810,7 @@ function AdminDashboard({ user, sessions, onLogout, onUpdateSession, onSaveRecor
           onSaveRecording={onSaveRecording}
           onUpdateSession={onUpdateSession}
           onMarkStatus={onMarkStatus}
+          onSendReminder={sendReminder}
         />
       )}
       {showSchedule && (
@@ -1604,6 +1819,13 @@ function AdminDashboard({ user, sessions, onLogout, onUpdateSession, onSaveRecor
           onSave={onAddSession}
           currentUserId={user.id}
           userRole="admin"
+          sessions={sessions}
+        />
+      )}
+      {showBroadcast && (
+        <BroadcastModal
+          onClose={()=>setShowBroadcast(false)}
+          onSend={onSendBroadcast}
         />
       )}
     </div>
@@ -1779,6 +2001,93 @@ function App() {
     }
   }
   
+  async function sendReminder(session) {
+    const student = USERS.find(u => u.id === session.studentId);
+    const tutor = USERS.find(u => u.id === session.tutorId);
+    
+    if (!student || !tutor) {
+      alert('❌ Error: Student or tutor not found');
+      return;
+    }
+    
+    const result = await sendSessionSMS(session, student, tutor, 'reminder');
+    
+    if (result.success) {
+      alert(`✓ Reminder SMS sent to ${student.name}!`);
+      
+      // Update session reminder tracking
+      try {
+        await supabase.from('sessions').update({
+          sms_reminder_sent: true,
+          sms_reminder_sent_at: new Date().toISOString()
+        }).eq('id', session.id);
+      } catch (error) {
+        console.error('Error updating reminder status:', error);
+      }
+    } else {
+      if (result.reason === 'no_phone') {
+        alert('❌ No mobile number available for this student or their parent.');
+      } else {
+        alert(`❌ Failed to send SMS: ${result.error || 'Unknown error'}`);
+      }
+    }
+  }
+  
+  async function sendBroadcast(message, recipients, progressCallback) {
+    const results = [];
+    
+    for (let i = 0; i < recipients.length; i++) {
+      const user = recipients[i];
+      progressCallback(i + 1, recipients.length);
+      
+      try {
+        // Send broadcast SMS via Netlify function
+        const response = await fetch('/.netlify/functions/send-sms', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            studentName: user.name,
+            tutorName: 'Manly Music',
+            instrument: 'Broadcast',
+            date: TODAY,
+            startTime: '12:00',
+            durationMin: 0,
+            recipientPhone: user.mobile,
+            messageType: 'broadcast',
+            broadcastMessage: message // Pass custom message
+          })
+        });
+        
+        const result = await response.json();
+        
+        if (result.success) {
+          // Log broadcast SMS in database
+          await supabase.from('sms_log').insert([{
+            session_id: null,
+            recipient_phone: user.mobile,
+            recipient_name: user.name,
+            message_type: 'broadcast',
+            message_body: message,
+            twilio_sid: result.messageSid,
+            status: 'sent'
+          }]);
+          
+          results.push({ user: user.name, success: true });
+        } else {
+          results.push({ user: user.name, success: false, error: result.error });
+        }
+      } catch (error) {
+        console.error(`Error sending to ${user.name}:`, error);
+        results.push({ user: user.name, success: false, error: error.message });
+      }
+      
+      // Small delay to avoid rate limiting
+      await new Promise(resolve => setTimeout(resolve, 100));
+    }
+    
+    return results;
+  }
+  
   async function addSession(s) {
     const newId = Date.now();
     const newSession = { ...s, id: newId };
@@ -1869,7 +2178,7 @@ function App() {
   if (role==='student') return <StudentDashboard user={currentUser} {...sharedProps}/>;
   if (role==='parent') return <ParentDashboard user={currentUser} sessions={sessions} onLogout={logout}/>;
   if (role==='tutor') return <TutorDashboard user={currentUser} {...sharedProps}/>;
-  if (role==='admin') return <AdminDashboard user={currentUser} {...sharedProps} onTogglePay={togglePay}/>;
+  if (role==='admin') return <AdminDashboard user={currentUser} {...sharedProps} onTogglePay={togglePay} onSendBroadcast={sendBroadcast}/>;
 
   return null;
 }
