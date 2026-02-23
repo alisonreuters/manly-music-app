@@ -7,6 +7,23 @@
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
 <title>Manly Music — Portal V5 — Live Database</title>
+
+<!-- PWA Manifest -->
+<link rel="manifest" href="/manifest.json">
+<meta name="theme-color" content="#1976D2">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="application-name" content="Manly Music">
+
+<!-- iOS Meta Tags -->
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Manly Music">
+
+<!-- Icons -->
+<link rel="icon" type="image/png" sizes="32x32" href="/icons/favicon.png">
+<link rel="apple-touch-icon" sizes="180x180" href="/icons/apple-touch-icon.png">
+<link rel="icon" type="image/png" sizes="192x192" href="/icons/icon-192.png">
+
 <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
 <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
 <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
@@ -543,6 +560,463 @@ function StarRating({ rating, onChange, readOnly }) {
 }
 
 /* ══════════════════════════════════════════════════
+   RECORDING UPLOAD COMPONENT
+══════════════════════════════════════════════════ */
+function RecordingUpload({ sessionId, userRole, currentUserId, onUploadComplete }) {
+  const [uploading, setUploading] = useState(false);
+  const [dragActive, setDragActive] = useState(false);
+  const fileInputRef = useRef(null);
+
+  const handleDrag = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (e.type === "dragenter" || e.type === "dragover") {
+      setDragActive(true);
+    } else if (e.type === "dragleave") {
+      setDragActive(false);
+    }
+  };
+
+  const handleDrop = async (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setDragActive(false);
+    
+    if (e.dataTransfer.files && e.dataTransfer.files[0]) {
+      await uploadFile(e.dataTransfer.files[0]);
+    }
+  };
+
+  const handleChange = async (e) => {
+    e.preventDefault();
+    if (e.target.files && e.target.files[0]) {
+      await uploadFile(e.target.files[0]);
+    }
+  };
+
+  const uploadFile = async (file) => {
+    // Validate file type (audio only)
+    const validTypes = ['audio/mpeg', 'audio/mp3', 'audio/wav', 'audio/m4a', 'audio/aac', 'audio/ogg'];
+    if (!validTypes.includes(file.type) && !file.name.match(/\.(mp3|wav|m4a|aac|ogg)$/i)) {
+      alert('Please upload an audio file (MP3, WAV, M4A, AAC, or OGG)');
+      return;
+    }
+
+    // Validate file size (max 50MB)
+    if (file.size > 50 * 1024 * 1024) {
+      alert('File size must be less than 50MB');
+      return;
+    }
+
+    setUploading(true);
+
+    try {
+      // Create unique filename
+      const timestamp = Date.now();
+      const sanitizedName = file.name.replace(/[^a-zA-Z0-9.-]/g, '_');
+      const storagePath = `${sessionId}/${timestamp}_${sanitizedName}`;
+
+      // Upload to Supabase Storage
+      const { data: uploadData, error: uploadError } = await supabase.storage
+        .from('lesson-recordings')
+        .upload(storagePath, file);
+
+      if (uploadError) throw uploadError;
+
+      // Save metadata to database
+      const { data: recordingData, error: dbError } = await supabase
+        .from('recordings')
+        .insert([{
+          session_id: sessionId,
+          uploaded_by: currentUserId,
+          uploader_role: userRole,
+          file_name: file.name,
+          file_type: file.type,
+          file_size: file.size,
+          storage_path: storagePath
+        }])
+        .select()
+        .single();
+
+      if (dbError) throw dbError;
+
+      // Call callback to refresh recordings list
+      if (onUploadComplete) {
+        onUploadComplete(recordingData);
+      }
+
+      alert('Recording uploaded successfully!');
+      
+    } catch (error) {
+      console.error('Upload error:', error);
+      alert('Failed to upload recording. Please try again.');
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  const label = userRole === 'student' ? 'Practice Recording' : 'Lesson Recording';
+
+  return (
+    <div
+      style={{
+        border: `2px dashed ${dragActive ? 'var(--accent)' : 'var(--border2)'}`,
+        borderRadius: '8px',
+        padding: '2rem',
+        textAlign: 'center',
+        background: dragActive ? 'var(--bg3)' : 'var(--bg2)',
+        cursor: uploading ? 'wait' : 'pointer',
+        transition: 'all 0.2s'
+      }}
+      onDragEnter={handleDrag}
+      onDragLeave={handleDrag}
+      onDragOver={handleDrag}
+      onDrop={handleDrop}
+      onClick={() => !uploading && fileInputRef.current?.click()}
+    >
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept="audio/*"
+        onChange={handleChange}
+        style={{ display: 'none' }}
+      />
+      
+      {uploading ? (
+        <div>
+          <div style={{ fontSize: '2rem', marginBottom: '0.5rem' }}>⏳</div>
+          <div style={{ color: 'var(--text2)', fontSize: '.9rem' }}>Uploading...</div>
+        </div>
+      ) : (
+        <div>
+          <div style={{ fontSize: '2rem', marginBottom: '0.5rem' }}>🎵</div>
+          <div style={{ color: 'var(--text)', fontSize: '.95rem', fontWeight: 500, marginBottom: '0.3rem' }}>
+            Upload {label}
+          </div>
+          <div style={{ color: 'var(--text3)', fontSize: '.85rem' }}>
+            Drag & drop or click to browse
+          </div>
+          <div style={{ color: 'var(--text3)', fontSize: '.75rem', marginTop: '0.5rem' }}>
+            MP3, WAV, M4A, AAC, OGG • Max 50MB
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+/* ══════════════════════════════════════════════════
+   RECORDING PLAYER COMPONENT
+══════════════════════════════════════════════════ */
+function RecordingPlayer({ recording, onDelete, canDelete }) {
+  const audioRef = useRef(null);
+  const [playing, setPlaying] = useState(false);
+  const [currentTime, setCurrentTime] = useState(0);
+  const [duration, setDuration] = useState(0);
+  const [audioUrl, setAudioUrl] = useState(null);
+
+  useEffect(() => {
+    // Get public URL for the recording
+    const { data } = supabase.storage
+      .from('lesson-recordings')
+      .getPublicUrl(recording.storagePath);
+    
+    setAudioUrl(data.publicUrl);
+  }, [recording.storagePath]);
+
+  const togglePlay = () => {
+    if (playing) {
+      audioRef.current?.pause();
+    } else {
+      audioRef.current?.play();
+    }
+    setPlaying(!playing);
+  };
+
+  const handleTimeUpdate = () => {
+    setCurrentTime(audioRef.current?.currentTime || 0);
+  };
+
+  const handleLoadedMetadata = () => {
+    setDuration(audioRef.current?.duration || 0);
+  };
+
+  const handleSeek = (e) => {
+    const rect = e.currentTarget.getBoundingClientRect();
+    const pos = (e.clientX - rect.left) / rect.width;
+    const newTime = pos * duration;
+    if (audioRef.current) {
+      audioRef.current.currentTime = newTime;
+    }
+  };
+
+  const formatTime = (seconds) => {
+    const mins = Math.floor(seconds / 60);
+    const secs = Math.floor(seconds % 60);
+    return `${mins}:${secs.toString().padStart(2, '0')}`;
+  };
+
+  const formatFileSize = (bytes) => {
+    if (bytes < 1024) return bytes + ' B';
+    if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
+    return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
+  };
+
+  const handleDownload = () => {
+    window.open(audioUrl, '_blank');
+  };
+
+  const handleDeleteClick = async () => {
+    if (!confirm('Delete this recording? This cannot be undone.')) return;
+    
+    try {
+      // Delete from storage
+      const { error: storageError } = await supabase.storage
+        .from('lesson-recordings')
+        .remove([recording.storagePath]);
+      
+      if (storageError) throw storageError;
+
+      // Delete from database
+      const { error: dbError } = await supabase
+        .from('recordings')
+        .delete()
+        .eq('id', recording.id);
+      
+      if (dbError) throw dbError;
+
+      if (onDelete) onDelete(recording.id);
+      
+    } catch (error) {
+      console.error('Delete error:', error);
+      alert('Failed to delete recording');
+    }
+  };
+
+  const roleLabel = recording.uploaderRole === 'student' ? 'Student' : 'Tutor';
+  const roleColor = recording.uploaderRole === 'student' ? 'var(--blue)' : 'var(--green)';
+
+  return (
+    <div style={{
+      background: 'var(--bg2)',
+      border: '1px solid var(--border)',
+      borderRadius: '8px',
+      padding: '1rem',
+      marginBottom: '0.75rem'
+    }}>
+      <audio
+        ref={audioRef}
+        src={audioUrl}
+        onTimeUpdate={handleTimeUpdate}
+        onLoadedMetadata={handleLoadedMetadata}
+        onEnded={() => setPlaying(false)}
+      />
+      
+      {/* Header */}
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '0.75rem' }}>
+        <div style={{ flex: 1 }}>
+          <div style={{ fontSize: '.9rem', fontWeight: 500, color: 'var(--text)', marginBottom: '0.25rem' }}>
+            {recording.fileName}
+          </div>
+          <div style={{ fontSize: '.75rem', color: 'var(--text3)' }}>
+            <span style={{ color: roleColor, fontWeight: 500 }}>{roleLabel} Recording</span>
+            {' • '}
+            {formatFileSize(recording.fileSize)}
+            {' • '}
+            {new Date(recording.uploadedAt).toLocaleDateString()}
+          </div>
+        </div>
+        <div style={{ display: 'flex', gap: '0.5rem' }}>
+          <button
+            onClick={handleDownload}
+            style={{
+              background: 'var(--bg3)',
+              border: '1px solid var(--border2)',
+              borderRadius: '4px',
+              padding: '0.4rem 0.7rem',
+              color: 'var(--text2)',
+              cursor: 'pointer',
+              fontSize: '.8rem'
+            }}
+            title="Download"
+          >
+            ⬇️
+          </button>
+          {canDelete && (
+            <button
+              onClick={handleDeleteClick}
+              style={{
+                background: 'var(--bg3)',
+                border: '1px solid var(--border2)',
+                borderRadius: '4px',
+                padding: '0.4rem 0.7rem',
+                color: 'var(--red)',
+                cursor: 'pointer',
+                fontSize: '.8rem'
+              }}
+              title="Delete"
+            >
+              🗑️
+            </button>
+          )}
+        </div>
+      </div>
+
+      {/* Player Controls */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+        <button
+          onClick={togglePlay}
+          style={{
+            background: 'var(--accent)',
+            border: 'none',
+            borderRadius: '50%',
+            width: '36px',
+            height: '36px',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            cursor: 'pointer',
+            fontSize: '1rem'
+          }}
+        >
+          {playing ? '⏸' : '▶'}
+        </button>
+
+        <div style={{ fontSize: '.75rem', color: 'var(--text3)', minWidth: '35px' }}>
+          {formatTime(currentTime)}
+        </div>
+
+        {/* Progress Bar */}
+        <div
+          onClick={handleSeek}
+          style={{
+            flex: 1,
+            height: '6px',
+            background: 'var(--bg3)',
+            borderRadius: '3px',
+            cursor: 'pointer',
+            position: 'relative'
+          }}
+        >
+          <div
+            style={{
+              position: 'absolute',
+              left: 0,
+              top: 0,
+              height: '100%',
+              width: `${duration > 0 ? (currentTime / duration) * 100 : 0}%`,
+              background: 'var(--accent)',
+              borderRadius: '3px',
+              transition: 'width 0.1s'
+            }}
+          />
+        </div>
+
+        <div style={{ fontSize: '.75rem', color: 'var(--text3)', minWidth: '35px' }}>
+          {formatTime(duration)}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ══════════════════════════════════════════════════
+   RECORDINGS LIST COMPONENT
+══════════════════════════════════════════════════ */
+function RecordingsList({ sessionId, userRole, currentUserId }) {
+  const [recordings, setRecordings] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    loadRecordings();
+  }, [sessionId]);
+
+  async function loadRecordings() {
+    try {
+      const { data, error } = await supabase
+        .from('recordings')
+        .select('*')
+        .eq('session_id', sessionId)
+        .order('uploaded_at', { ascending: false });
+      
+      if (error) throw error;
+      
+      setRecordings(data || []);
+    } catch (error) {
+      console.error('Error loading recordings:', error);
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  const handleUploadComplete = (newRecording) => {
+    setRecordings(prev => [newRecording, ...prev]);
+  };
+
+  const handleDelete = (recordingId) => {
+    setRecordings(prev => prev.filter(r => r.id !== recordingId));
+  };
+
+  if (loading) {
+    return <div style={{ color: 'var(--text3)', fontSize: '.9rem' }}>Loading recordings...</div>;
+  }
+
+  const canUpload = userRole === 'student' || userRole === 'tutor' || userRole === 'admin';
+
+  return (
+    <div className="sp-section">
+      <div className="sp-section-title" style={{ marginBottom: '1rem' }}>
+        🎙️ RECORDINGS
+      </div>
+
+      {/* Upload Area */}
+      {canUpload && (
+        <div style={{ marginBottom: '1.5rem' }}>
+          <RecordingUpload
+            sessionId={sessionId}
+            userRole={userRole}
+            currentUserId={currentUserId}
+            onUploadComplete={handleUploadComplete}
+          />
+        </div>
+      )}
+
+      {/* Recordings List */}
+      {recordings.length > 0 ? (
+        <div>
+          {recordings.map(recording => (
+            <RecordingPlayer
+              key={recording.id}
+              recording={{
+                id: recording.id,
+                fileName: recording.file_name,
+                fileSize: recording.file_size,
+                storagePath: recording.storage_path,
+                uploadedAt: recording.uploaded_at,
+                uploaderRole: recording.uploader_role
+              }}
+              onDelete={handleDelete}
+              canDelete={recording.uploaded_by === currentUserId || userRole === 'admin'}
+            />
+          ))}
+        </div>
+      ) : (
+        <div style={{
+          padding: '2rem',
+          textAlign: 'center',
+          color: 'var(--text3)',
+          fontSize: '.9rem'
+        }}>
+          {canUpload 
+            ? '📁 No recordings yet. Upload your first recording above!' 
+            : '📁 No recordings available for this session.'}
+        </div>
+      )}
+    </div>
+  );
+}
+
+/* ══════════════════════════════════════════════════
    ASSESSMENT SECTION COMPONENT
 ══════════════════════════════════════════════════ */
 function AssessmentSection({ session, userRole, onUpdateAssessment }) {
@@ -797,6 +1271,13 @@ function SessionPanel({ session, userRole, currentUserId, onClose, onSaveRecordi
               onUpdateAssessment={onUpdateSession}
             />
           )}
+
+          {/* ── Recordings Section ── */}
+          <RecordingsList
+            sessionId={session.id}
+            userRole={userRole}
+            currentUserId={currentUserId}
+          />
 
           {/* ── Session Summary (scheduled & completed) ── */}
           <div className="sp-section">
@@ -3153,5 +3634,21 @@ function App() {
 
 ReactDOM.render(<App/>, document.getElementById('root'));
 </script>
+
+<!-- Register Service Worker for PWA -->
+<script>
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('/service-worker.js')
+      .then(registration => {
+        console.log('Service Worker registered successfully:', registration.scope);
+      })
+      .catch(error => {
+        console.log('Service Worker registration failed:', error);
+      });
+  });
+}
+</script>
+
 </body>
 </html>
