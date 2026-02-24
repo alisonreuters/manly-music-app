@@ -1412,7 +1412,7 @@ function SessionPanel({ session, userRole, currentUserId, onClose, onSaveRecordi
    CALENDAR COMPONENT
 ══════════════════════════════════════════════════ */
 function AttendanceCalendar({ sessions, userRole, currentUserId, filterStudentIds, onSelectSession }) {
-  const todayDate = new Date(2026, 1, 17);
+ const todayDate = new Date();
   const [date, setDate] = useState(new Date(2026, 1, 1));
   const [flyoutDate, setFlyoutDate] = useState(null); // Track which day's flyout is open
 
