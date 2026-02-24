@@ -140,9 +140,9 @@ input[type="time"]::-webkit-calendar-picker-indicator {
    STATS GRID
 ══════════════════════════════════ */
 .stats-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(150px,1fr)); gap:1rem; margin-bottom:1.75rem; }
-.stat-card { background:var(--bg2); border:1px solid var(--border); padding:1.25rem 1.5rem; border-radius:var(--radius); }
-.stat-val { font-size:2rem; font-weight:300; letter-spacing:-.03em; margin-bottom:.3rem; }
-.stat-lbl { font-size:.75rem; color:var(--text3); text-transform:uppercase; letter-spacing:.06em; }
+.stat-card { background:var(--bg2); border:1px solid var(--border); padding:.75rem 1rem; border-radius:var(--radius); }
+.stat-val { font-size:1.5rem; font-weight:300; letter-spacing:-.03em; margin-bottom:.25rem; }
+.stat-lbl { font-size:.7rem; color:var(--text2); text-transform:uppercase; letter-spacing:.06em; }
 
 /* ══════════════════════════════════
    CARD
@@ -2971,6 +2971,7 @@ function AdminDashboard({ user, sessions, onLogout, onUpdateSession, onSaveRecor
   const [filterStudent, setFilterStudent] = useState('all');
   const [view, setView]                   = useState('calendar'); // 'calendar' | 'list'
   const [searchQuery, setSearchQuery]     = useState('');
+  const [showStudentList, setShowStudentList] = useState(false);
 
   const students = USERS.filter(u=>u.role==='student').sort((a,b)=>a.name.split(' ').pop().localeCompare(b.name.split(' ').pop()));
   
@@ -3045,6 +3046,9 @@ function AdminDashboard({ user, sessions, onLogout, onUpdateSession, onSaveRecor
               onChange={e => {
                 setSearchQuery(e.target.value);
                 setFilterStudent('all'); // Reset filter when searching
+                if (e.target.value.trim()) {
+                  setShowStudentList(true); // Show list when searching
+                }
               }}
               style={{
                 background:'var(--bg2)',
@@ -3063,9 +3067,18 @@ function AdminDashboard({ user, sessions, onLogout, onUpdateSession, onSaveRecor
             
             {/* Student Filter Buttons */}
             <div className="cal-filter" style={{margin:0,flex:'1 1 auto'}}>
-              <button className={`filter-btn${filterStudent==='all'?' active':''}`} onClick={()=>{setFilterStudent('all');setSearchQuery('');}}>All Students</button>
-              {filteredStudents.map(s=>(
-                <button key={s.id} className={`filter-btn${filterStudent===String(s.id)?' active':''}`} onClick={()=>{setFilterStudent(String(s.id));setSearchQuery('');}}>
+              <button 
+                className={`filter-btn${filterStudent==='all'?' active':''}`} 
+                onClick={()=>{
+                  setFilterStudent('all');
+                  setSearchQuery('');
+                  setShowStudentList(!showStudentList); // Toggle list visibility
+                }}
+              >
+                All Students
+              </button>
+              {(showStudentList || searchQuery.trim()) && filteredStudents.map(s=>(
+                <button key={s.id} className={`filter-btn${filterStudent===String(s.id)?' active':''}`} onClick={()=>{setFilterStudent(String(s.id));setSearchQuery('');setShowStudentList(false);}}>
                   {s.name}
                 </button>
               ))}
@@ -3075,7 +3088,7 @@ function AdminDashboard({ user, sessions, onLogout, onUpdateSession, onSaveRecor
           {/* Overdue Assessments Alert */}
           {overdueAssessments.length > 0 && (
             <div style={{
-              background: 'linear-gradient(135deg, #ff4444 0%, #cc0000 100%)',
+              background: 'linear-gradient(135deg, #ff8888 0%, #e66666 100%)',
               color: '#fff',
               padding: '.75rem 1rem',
               borderRadius: '8px',
@@ -3084,8 +3097,8 @@ function AdminDashboard({ user, sessions, onLogout, onUpdateSession, onSaveRecor
               gap: '.75rem',
               fontWeight: 600,
               fontSize: '.9rem',
-              border: '2px solid #ff0000',
-              boxShadow: '0 4px 12px rgba(255, 68, 68, 0.3)',
+              border: '2px solid #ff6666',
+              boxShadow: '0 4px 12px rgba(255, 102, 102, 0.3)',
               cursor: 'pointer'
             }}
             onClick={() => {
@@ -3104,13 +3117,20 @@ function AdminDashboard({ user, sessions, onLogout, onUpdateSession, onSaveRecor
             </div>
           )}
           
-          <div style={{display:'flex',gap:'.5rem'}}>
-            <button className={`btn btn-sm${view==='calendar'?' btn-primary':''}`} onClick={()=>setView('calendar')}>Calendar</button>
-            <button className={`btn btn-sm${view==='list'?' btn-primary':''}`} onClick={()=>setView('list')}>Day List</button>
-            <button className={`btn btn-sm${view==='roster'?' btn-primary':''}`} onClick={()=>setView('roster')}>Tutor Roster</button>
-            <button className="btn btn-amber btn-sm" onClick={()=>setShowBroadcast(true)}>📢 Broadcast SMS</button>
-            <button className="btn btn-blue btn-sm" onClick={()=>setShowBroadcastEmail(true)}>📧 Broadcast Email</button>
-            <button className="btn btn-primary btn-sm" onClick={()=>setShowSchedule(true)}>+ Schedule</button>
+          <div style={{display:'flex',gap:'.5rem',justifyContent:'space-between',width:'100%',flexWrap:'wrap'}}>
+            {/* Left group: View controls and Schedule */}
+            <div style={{display:'flex',gap:'.5rem',flexWrap:'wrap'}}>
+              <button className={`btn btn-sm${view==='calendar'?' btn-primary':''}`} onClick={()=>setView('calendar')}>Calendar</button>
+              <button className={`btn btn-sm${view==='list'?' btn-primary':''}`} onClick={()=>setView('list')}>Day List</button>
+              <button className={`btn btn-sm${view==='roster'?' btn-primary':''}`} onClick={()=>setView('roster')}>Tutor Roster</button>
+              <button className="btn btn-sm" onClick={()=>setShowSchedule(true)}>+ Schedule</button>
+            </div>
+            
+            {/* Right group: Broadcast controls */}
+            <div style={{display:'flex',gap:'.5rem',flexWrap:'wrap'}}>
+              <button className="btn btn-amber btn-sm" onClick={()=>setShowBroadcast(true)}>📢 Broadcast SMS</button>
+              <button className="btn btn-blue btn-sm" onClick={()=>setShowBroadcastEmail(true)}>📧 Broadcast Email</button>
+            </div>
           </div>
         </div>
 
