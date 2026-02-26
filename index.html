@@ -1,4 +1,3 @@
-<!-- v3.0 - Feb 25 5:45pm - Clean build -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -2390,7 +2389,16 @@ function LoginScreen({ onLogin, userType, onBack, users }) {
     const user = users.find(u=>u.email===email && u.password===pw);
     if (user) {
       if (userType==='tutor' && user.role==='tutor') { onLogin(user); return; }
-      if (userType==='staff' && (user.role==='admin'||user.role==='tutor')) { onLogin(user); return; }
+      if (userType==='staff' && (user.role==='admin'||user.role==='tutor')) { 
+        // Give Jake admin privileges even though he's marked as tutor in database
+        // This allows him to show in tutor lists for scheduling while accessing admin features
+        if (user.email === 'pyrocideest2012@gmail.com') {
+          onLogin({...user, role: 'admin'});
+        } else {
+          onLogin(user);
+        }
+        return;
+      }
       if (userType===user.role) { onLogin(user); return; }
       setErr('Invalid credentials for this portal type.');
     } else { setErr('Incorrect username or password.'); }
@@ -2968,6 +2976,203 @@ function TutorDashboard({ user, sessions, onLogout, onUpdateSession, onSaveRecor
   );
 }
 
+
+/* ══════════════════════════════════════════════════
+   TUTOR BIO PAGE
+══════════════════════════════════════════════════ */
+function TutorBioPage({ onBack, users }) {
+  const [selectedTutor, setSelectedTutor] = useState(null);
+  
+  const tutors = users.filter(u => u.role === 'tutor').sort((a,b) => a.name.localeCompare(b.name));
+  
+  if (selectedTutor) {
+    return <TutorDetailView tutor={selectedTutor} onBack={() => setSelectedTutor(null)} />;
+  }
+  
+  return (
+    <div>
+      <AppHeader title="Meet Our Tutors" sub="Our talented music educators" onLogout={onBack}/>
+      
+      <div className="dashboard">
+        <div style={{
+          display: 'grid',
+          gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))',
+          gap: '1.5rem',
+          marginBottom: '2rem'
+        }}>
+          {tutors.map(tutor => (
+            <div
+              key={tutor.id}
+              onClick={() => setSelectedTutor(tutor)}
+              style={{
+                background: 'var(--bg2)',
+                border: '1px solid var(--border)',
+                borderRadius: 'var(--radius)',
+                padding: '1.5rem',
+                cursor: 'pointer',
+                transition: 'all 0.2s',
+              }}
+              onMouseEnter={e => {
+                e.currentTarget.style.borderColor = 'var(--accent)';
+                e.currentTarget.style.transform = 'translateY(-2px)';
+              }}
+              onMouseLeave={e => {
+                e.currentTarget.style.borderColor = 'var(--border)';
+                e.currentTarget.style.transform = 'translateY(0)';
+              }}
+            >
+              <div style={{
+                width: '100%',
+                aspectRatio: '1',
+                background: 'linear-gradient(135deg, var(--accent) 0%, var(--blue) 100%)',
+                borderRadius: 'var(--radius)',
+                marginBottom: '1rem',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                fontSize: '3rem',
+                color: 'white',
+                fontWeight: '600'
+              }}>
+                {tutor.name.split(' ').map(n => n[0]).join('')}
+              </div>
+              
+              <h3 style={{
+                fontSize: '1.25rem',
+                fontWeight: '600',
+                marginBottom: '.5rem',
+                color: 'var(--text)'
+              }}>
+                {tutor.name}
+              </h3>
+              
+              <div style={{
+                fontSize: '.875rem',
+                color: 'var(--accent)',
+                marginBottom: '.75rem',
+                fontWeight: '500'
+              }}>
+                {tutor.instruments_taught || tutor.instrument}
+              </div>
+              
+              {tutor.bio && (
+                <p style={{
+                  fontSize: '.85rem',
+                  color: 'var(--text3)',
+                  lineHeight: '1.5',
+                  overflow: 'hidden',
+                  textOverflow: 'ellipsis',
+                  display: '-webkit-box',
+                  WebkitLineClamp: 3,
+                  WebkitBoxOrient: 'vertical'
+                }}>
+                  {tutor.bio}
+                </p>
+              )}
+              
+              <div style={{
+                marginTop: '1rem',
+                color: 'var(--accent)',
+                fontSize: '.875rem',
+                fontWeight: '500'
+              }}>
+                Read more →
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function TutorDetailView({ tutor, onBack }) {
+  return (
+    <div>
+      <AppHeader title={tutor.name} sub="Music Educator" onLogout={onBack}/>
+      
+      <div className="dashboard" style={{maxWidth: '800px', margin: '0 auto'}}>
+        <div style={{
+          width: '200px',
+          height: '200px',
+          background: 'linear-gradient(135deg, var(--accent) 0%, var(--blue) 100%)',
+          borderRadius: 'var(--radius)',
+          margin: '0 auto 2rem',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          fontSize: '4rem',
+          color: 'white',
+          fontWeight: '600'
+        }}>
+          {tutor.name.split(' ').map(n => n[0]).join('')}
+        </div>
+        
+        <div style={{
+          background: 'var(--bg2)',
+          border: '1px solid var(--border)',
+          borderRadius: 'var(--radius)',
+          padding: '2rem'
+        }}>
+          <h2 style={{
+            fontSize: '2rem',
+            fontWeight: '600',
+            marginBottom: '.5rem',
+            textAlign: 'center'
+          }}>
+            {tutor.name}
+          </h2>
+          
+          <div style={{
+            fontSize: '1.125rem',
+            color: 'var(--accent)',
+            marginBottom: '2rem',
+            fontWeight: '500',
+            textAlign: 'center'
+          }}>
+            {tutor.instruments_taught || tutor.instrument}
+          </div>
+          
+          {tutor.bio && (
+            <p style={{
+              fontSize: '1rem',
+              color: 'var(--text2)',
+              lineHeight: '1.7',
+              marginBottom: '1.5rem'
+            }}>
+              {tutor.bio}
+            </p>
+          )}
+          
+          {tutor.email && (
+            <div style={{
+              padding: '1rem',
+              background: 'var(--bg1)',
+              borderRadius: 'var(--radius)',
+              marginTop: '1.5rem'
+            }}>
+              <div style={{fontSize: '.875rem', color: 'var(--text3)', marginBottom: '.25rem'}}>
+                Contact
+              </div>
+              <div style={{color: 'var(--accent)'}}>
+                {tutor.email}
+              </div>
+            </div>
+          )}
+        </div>
+        
+        <button 
+          className="btn btn-primary" 
+          onClick={onBack}
+          style={{marginTop: '2rem', width: '100%'}}
+        >
+          ← Back to All Tutors
+        </button>
+      </div>
+    </div>
+  );
+}
+
 /* ══════════════════════════════════════════════════
    ADMIN DASHBOARD
 ══════════════════════════════════════════════════ */
@@ -3297,6 +3502,7 @@ function App() {
   const [sessions, setSessions] = useState([]);
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [showTutorBios, setShowTutorBios] = useState(false);
 
   // Load data from Supabase on mount
   useEffect(() => {
@@ -3671,7 +3877,9 @@ function App() {
 }
 
 ReactDOM.render(<App/>, document.getElementById('root'));
-
 </script>
+
+<!-- Service worker removed for cache reasons -->
+
 </body>
 </html>
