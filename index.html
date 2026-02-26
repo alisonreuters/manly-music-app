@@ -3867,7 +3867,7 @@ function App() {
   if (!currentUser) return <LoginScreen onLogin={setUser} userType={loginType} onBack={()=>setLogin(null)} users={users}/>;
 
   const role = currentUser.role;
-  const sharedProps = { sessions, onLogout:logout, onUpdateSession:updateSession, onSaveRecording:saveRecording, onMarkStatus:markStatus, onAddSession:addSession, onSendReminder:sendReminder };
+  const sharedProps = { sessions, onLogout:logout, onUpdateSession:updateSession, onSaveRecording:saveRecording, onMarkStatus:markStatus, onAddSession:addSession, onSendReminder:sendReminder, onShowTutorBios:() => setShowTutorBios(true) };
 
   if (role==='student') return <StudentDashboard user={currentUser} {...sharedProps}/>;
   if (role==='parent') return <ParentDashboard user={currentUser} sessions={sessions} onLogout={logout}/>;
