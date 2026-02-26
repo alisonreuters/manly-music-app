@@ -3866,6 +3866,11 @@ function App() {
   if (!loginType) return <LandingPage onSelectLogin={setLogin}/>;
   if (!currentUser) return <LoginScreen onLogin={setUser} userType={loginType} onBack={()=>setLogin(null)} users={users}/>;
 
+  // Tutor bio page route
+  if (showTutorBios) {
+    return <TutorBioPage onBack={() => setShowTutorBios(false)} users={users} />;
+  }
+
   const role = currentUser.role;
   const sharedProps = { sessions, onLogout:logout, onUpdateSession:updateSession, onSaveRecording:saveRecording, onMarkStatus:markStatus, onAddSession:addSession, onSendReminder:sendReminder, onShowTutorBios:() => setShowTutorBios(true) };
 
