@@ -2080,8 +2080,8 @@ function TutorRoster({ sessions, currentUserId, userRole }) {
     let cur = new Date(from + 'T00:00:00');
     const end = new Date(to + 'T00:00:00');
     while (cur <= end) {
-      const wd = cur.getDay();
-      if (wd !== 0 && wd !== 6) dates.push(cur.toISOString().slice(0,10));
+      // Show all days (Monday-Sunday) since school operates 6-7 days
+      dates.push(cur.toISOString().slice(0,10));
       cur.setDate(cur.getDate() + 1);
     }
     return dates;
