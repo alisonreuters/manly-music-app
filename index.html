@@ -3179,6 +3179,241 @@ function TutorDetailView({ tutor, onBack }) {
 }
 
 /* ══════════════════════════════════════════════════
+   EXCEL EXPORT MODAL FOR ATTENDANCE REPORTS
+══════════════════════════════════════════════════ */
+
+// This component allows admins to export attendance reports to Excel
+// Includes date range filters, status filters, and tutor filters
+
+function ExportReportModal({ onClose, sessions, users }) {
+  const today = new Date();
+  const firstDayOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
+  const lastDayOfMonth = new Date(today.getFullYear(), today.getMonth() + 1, 0);
+  
+  const [fromDate, setFromDate] = useState(firstDayOfMonth.toISOString().slice(0, 10));
+  const [toDate, setToDate] = useState(lastDayOfMonth.toISOString().slice(0, 10));
+  const [statusFilter, setStatusFilter] = useState('all');
+  const [paymentFilter, setPaymentFilter] = useState('all');
+  const [tutorFilter, setTutorFilter] = useState('all');
+  const [exporting, setExporting] = useState(false);
+
+  const tutors = users.filter(u => u.role === 'tutor');
+
+  // Filter sessions based on criteria
+  const filteredSessions = sessions.filter(s => {
+    // Date range
+    if (s.date < fromDate || s.date > toDate) return false;
+    
+    // Status filter
+    if (statusFilter !== 'all' && s.status !== statusFilter) return false;
+    
+    // Payment filter
+    if (paymentFilter !== 'all' && s.payment_status !== paymentFilter) return false;
+    
+    // Tutor filter
+    if (tutorFilter !== 'all' && s.tutorId !== parseInt(tutorFilter)) return false;
+    
+    return true;
+  }).sort((a, b) => a.date.localeCompare(b.date));
+
+  // Export to Excel function
+  async function exportToExcel() {
+    setExporting(true);
+    
+    try {
+      // Create CSV data with payment columns
+      const headers = ['Date', 'Day', 'Student', 'Tutor', 'Instrument', 'Duration (min)', 'Status', 'Payment Status', 'Payment Code', 'Authorized By', 'Auth Reason', 'Assessment Done'];
+      const rows = [headers];
+      
+      filteredSessions.forEach(session => {
+        const student = users.find(u => u.id === session.studentId);
+        const tutor = users.find(u => u.id === session.tutorId);
+        const sessionDate = new Date(session.date);
+        const dayName = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'][sessionDate.getDay()];
+        
+        // Check if assessment is complete
+        const hasAssessment = session.ratingTechnique || session.ratingRhythm || 
+                             session.ratingTone || session.ratingSightReading ||
+                             session.ratingExpression || session.ratingFocus;
+        
+        rows.push([
+          session.date,
+          dayName,
+          student?.name || 'Unknown',
+          tutor?.name || 'Unknown',
+          session.instrument,
+          session.durationMin,
+          session.status,
+          session.payment_status || 'Unknown',
+          session.payment_code || '',
+          session.authorized_by || '',
+          session.authorization_reason || '',
+          hasAssessment ? 'Yes' : 'No'
+        ]);
+      });
+      
+      // Convert to CSV
+      const csvContent = rows.map(row => 
+        row.map(cell => {
+          // Escape cells with commas or quotes
+          const cellStr = String(cell);
+          if (cellStr.includes(',') || cellStr.includes('"') || cellStr.includes('\n')) {
+            return '"' + cellStr.replace(/"/g, '""') + '"';
+          }
+          return cellStr;
+        }).join(',')
+      ).join('\n');
+      
+      // Create download
+      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+      const link = document.createElement('a');
+      const filename = `Attendance_Report_${fromDate}_to_${toDate}.csv`;
+      
+      link.href = URL.createObjectURL(blob);
+      link.download = filename;
+      link.click();
+      
+      // Clean up
+      URL.revokeObjectURL(link.href);
+      
+      // Success message
+      alert(`Exported ${filteredSessions.length} sessions to ${filename}`);
+      
+    } catch (error) {
+      console.error('Export error:', error);
+      alert('Export failed. Please try again.');
+    } finally {
+      setExporting(false);
+    }
+  }
+
+  return (
+    <>
+      <div className="modal-overlay" onClick={onClose} />
+      <div className="modal" style={{maxWidth: '600px'}}>
+        <div className="modal-header">
+          <h2>📊 Export Attendance Report</h2>
+          <button className="btn btn-sm" onClick={onClose}>✕</button>
+        </div>
+        
+        <div className="modal-body">
+          {/* Date Range */}
+          <div style={{marginBottom: '1.5rem'}}>
+            <h3 style={{fontSize: '1rem', fontWeight: 600, marginBottom: '.75rem', color: 'var(--text2)'}}>
+              Date Range
+            </h3>
+            <div style={{display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem'}}>
+              <div className="field">
+                <label>From</label>
+                <input 
+                  type="date" 
+                  value={fromDate} 
+                  onChange={e => setFromDate(e.target.value)}
+                />
+              </div>
+              <div className="field">
+                <label>To</label>
+                <input 
+                  type="date" 
+                  value={toDate} 
+                  onChange={e => setToDate(e.target.value)}
+                />
+              </div>
+            </div>
+          </div>
+
+          {/* Status Filter */}
+          <div style={{marginBottom: '1.5rem'}}>
+            <h3 style={{fontSize: '1rem', fontWeight: 600, marginBottom: '.75rem', color: 'var(--text2)'}}>
+              Session Status
+            </h3>
+            <div className="field">
+              <select value={statusFilter} onChange={e => setStatusFilter(e.target.value)}>
+                <option value="all">All Statuses</option>
+                <option value="attended">Attended Only</option>
+                <option value="missed">Missed Only</option>
+                <option value="scheduled">Scheduled Only</option>
+                <option value="cancelled">Cancelled Only</option>
+              </select>
+            </div>
+          </div>
+
+          {/* Payment Filter */}
+          <div style={{marginBottom: '1.5rem'}}>
+            <h3 style={{fontSize: '1rem', fontWeight: 600, marginBottom: '.75rem', color: 'var(--text2)'}}>
+              Payment Status
+            </h3>
+            <div className="field">
+              <select value={paymentFilter} onChange={e => setPaymentFilter(e.target.value)}>
+                <option value="all">All Payment Statuses</option>
+                <option value="paid">Paid Only</option>
+                <option value="invoice">Invoice Sent</option>
+                <option value="overdue">Overdue</option>
+                <option value="free">Complimentary/Free</option>
+                <option value="package">Package/Prepaid</option>
+                <option value="override">Admin Override</option>
+              </select>
+            </div>
+          </div>
+
+          {/* Tutor Filter */}
+          <div style={{marginBottom: '1.5rem'}}>
+            <h3 style={{fontSize: '1rem', fontWeight: 600, marginBottom: '.75rem', color: 'var(--text2)'}}>
+              Tutor
+            </h3>
+            <div className="field">
+              <select value={tutorFilter} onChange={e => setTutorFilter(e.target.value)}>
+                <option value="all">All Tutors</option>
+                {tutors.map(t => (
+                  <option key={t.id} value={t.id}>{t.name}</option>
+                ))}
+              </select>
+            </div>
+          </div>
+
+          {/* Preview Count */}
+          <div style={{
+            padding: '1rem',
+            background: 'var(--bg2)',
+            border: '1px solid var(--border)',
+            borderRadius: 'var(--radius)',
+            marginBottom: '1.5rem'
+          }}>
+            <div style={{fontSize: '.9rem', color: 'var(--text2)'}}>
+              Sessions to export: <strong style={{color: 'var(--text)', fontSize: '1.1rem'}}>
+                {filteredSessions.length}
+              </strong>
+            </div>
+          </div>
+
+          {/* Export Button */}
+          <button 
+            className="btn btn-primary" 
+            onClick={exportToExcel}
+            disabled={exporting || filteredSessions.length === 0}
+            style={{width: '100%', padding: '1rem'}}
+          >
+            {exporting ? '⏳ Exporting...' : '📥 Download Excel Report'}
+          </button>
+
+          {filteredSessions.length === 0 && (
+            <p style={{
+              marginTop: '1rem',
+              fontSize: '.85rem',
+              color: 'var(--text3)',
+              textAlign: 'center'
+            }}>
+              No sessions match the selected filters
+            </p>
+          )}
+        </div>
+      </div>
+    </>
+  );
+}
+
+
+/* ══════════════════════════════════════════════════
    ADMIN DASHBOARD
 ══════════════════════════════════════════════════ */
 function AdminDashboard({ user, sessions, onLogout, onUpdateSession, onSaveRecording, onMarkStatus, onAddSession, onTogglePay, onSendBroadcast, onSendReminder }) {
@@ -3186,6 +3421,7 @@ function AdminDashboard({ user, sessions, onLogout, onUpdateSession, onSaveRecor
   const [showSchedule,  setShowSchedule]  = useState(false);
   const [showBroadcast, setShowBroadcast] = useState(false);
   const [showBroadcastEmail, setShowBroadcastEmail] = useState(false);
+  const [showExportReport, setShowExportReport] = useState(false);
   const [filterStudent, setFilterStudent] = useState('all');
   const [view, setView]                   = useState('calendar'); // 'calendar' | 'list'
   const [searchQuery, setSearchQuery]     = useState('');
@@ -3353,6 +3589,7 @@ function AdminDashboard({ user, sessions, onLogout, onUpdateSession, onSaveRecor
             <div style={{display:'flex',gap:'.5rem',flexWrap:'wrap'}}>
               <button className="btn btn-amber btn-sm" onClick={()=>setShowBroadcast(true)}>📢 Broadcast SMS</button>
               <button className="btn btn-blue btn-sm" onClick={()=>setShowBroadcastEmail(true)}>📧 Broadcast Email</button>
+              <button className="btn btn-green btn-sm" onClick={()=>setShowExportReport(true)}>📊 Export Reports</button>
               {/* Meet Our Tutors button temporarily removed - causing black screen error */}
             </div>
           </div>
@@ -3398,6 +3635,13 @@ function AdminDashboard({ user, sessions, onLogout, onUpdateSession, onSaveRecor
         <BroadcastEmailModal
           onClose={()=>setShowBroadcastEmail(false)}
           adminEmail={user.email}
+        />
+      )}
+      {showExportReport && (
+        <ExportReportModal
+          onClose={()=>setShowExportReport(false)}
+          sessions={sessions}
+          users={USERS}
         />
       )}
     </div>
