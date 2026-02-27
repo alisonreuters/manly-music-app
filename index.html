@@ -2047,11 +2047,16 @@ function TutorRoster({ sessions, currentUserId, userRole }) {
     ? tutors.filter(t => t.id === currentUserId)
     : tutors;
 
+  // Dynamic date range - default to current month
+  const today = new Date();
+  const firstDayOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
+  const lastDayOfMonth = new Date(today.getFullYear(), today.getMonth() + 1, 0);
+  
   const [selectedTutor, setSelectedTutor] = useState(
     userRole === 'tutor' ? currentUserId : null
   );
-  const [fromDate, setFromDate] = useState('2026-02-01');
-  const [toDate,   setToDate]   = useState('2026-02-28');
+  const [fromDate, setFromDate] = useState(firstDayOfMonth.toISOString().slice(0, 10));
+  const [toDate,   setToDate]   = useState(lastDayOfMonth.toISOString().slice(0, 10));
   const [openDays, setOpenDays] = useState({});
 
   function toggleDay(d) { setOpenDays(p => ({...p, [d]: p[d]===false ? true : false})); }
