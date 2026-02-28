@@ -443,6 +443,29 @@ function fmtTime(t) { if(!t) return '—'; const [h,m]=t.split(':').map(Number);
 function statusColor(s) { return s==='attended'?'#22c55e':s==='missed'?'#ef4444':s==='scheduled'?'#3b82f6':s==='cancelled'?'#f59e0b':'#4a5568'; }
 function statusClass(s) { return `badge badge-${s||'pending'}`; }
 
+// Payment status helpers
+function paymentColor(p) { 
+  return p==='paid'?'#22c55e':        // GREEN
+         p==='invoice'?'#f59e0b':     // ORANGE
+         p==='overdue'?'#ef4444':     // RED
+         p==='free'?'#3b82f6':        // BLUE
+         p==='package'?'#a855f7':     // PURPLE
+         p==='override'?'#eab308':    // YELLOW
+         '#64748b';                   // GRAY (unknown)
+}
+
+function paymentBadge(p) {
+  const labels = {
+    paid: '✅ Paid',
+    invoice: '⚠️ Invoice Sent',
+    overdue: '🔴 Overdue',
+    free: '🆓 Free',
+    package: '📦 Package',
+    override: '⚡ Override',
+  };
+  return labels[p] || '❓ Unknown';
+}
+
 function userName(id) { return USERS.find(u=>u.id===id)?.name || '—'; }
 
 /* ══════════════════════════════════════════════════
@@ -1261,6 +1284,46 @@ function SessionPanel({ session, userRole, currentUserId, onClose, onSaveRecordi
             <div className="sp-row"><span className="sp-lbl">Tutor</span><span className="sp-val">{tutor?.name}</span></div>
             <div className="sp-row"><span className="sp-lbl">Instrument</span><span className="sp-val">{session.instrument}</span></div>
             {session.accompaniment && <div className="sp-row"><span className="sp-lbl">Accompaniment</span><span className="sp-val">{session.accompaniment}</span></div>}
+            
+            {/* Payment Status Badge */}
+            {session.payment_status && (
+              <div className="sp-row">
+                <span className="sp-lbl">Payment</span>
+                <span style={{
+                  background: paymentColor(session.payment_status),
+                  color: '#fff',
+                  padding: '.4rem .8rem',
+                  borderRadius: '6px',
+                  fontSize: '.85rem',
+                  fontWeight: '600',
+                  display: 'inline-block'
+                }}>
+                  {paymentBadge(session.payment_status)}
+                </span>
+              </div>
+            )}
+            
+            {/* Payment Code */}
+            {session.payment_code && (
+              <div className="sp-row">
+                <span className="sp-lbl">Payment Code</span>
+                <span className="sp-val" style={{fontFamily: 'monospace', fontWeight: '600'}}>{session.payment_code}</span>
+              </div>
+            )}
+            
+            {/* Authorization Info */}
+            {session.authorized_by && (
+              <div className="sp-row">
+                <span className="sp-lbl">Authorized By</span>
+                <span className="sp-val">{session.authorized_by}</span>
+              </div>
+            )}
+            {session.authorization_reason && (
+              <div className="sp-row">
+                <span className="sp-lbl">Reason</span>
+                <span className="sp-val" style={{fontStyle: 'italic', color: 'var(--text3)'}}>{session.authorization_reason}</span>
+              </div>
+            )}
           </div>
 
           {/* ── Assessment Section (PROMINENT) ── */}
@@ -1376,6 +1439,136 @@ function SessionPanel({ session, userRole, currentUserId, onClose, onSaveRecordi
                     {s.charAt(0).toUpperCase()+s.slice(1)}
                   </button>
                 ))}
+              </div>
+            </div>
+          )}
+
+          {/* ── Payment Management (admin only) ── */}
+          {userRole === 'admin' && (
+            <div className="sp-section" style={{background: 'linear-gradient(135deg, var(--bg2) 0%, var(--bg3) 100%)', border: '2px solid var(--accent)'}}>
+              <div className="sp-section-title" style={{marginBottom:'.75rem'}}>💳 Payment Management</div>
+              
+              {/* Quick Status Buttons */}
+              <div style={{marginBottom: '1rem'}}>
+                <div style={{fontSize: '.85rem', color: 'var(--text3)', marginBottom: '.5rem'}}>Set Payment Status:</div>
+                <div style={{display:'flex',gap:'.5rem',flexWrap:'wrap'}}>
+                  {[
+                    ['paid', '✅ Paid', '#22c55e'],
+                    ['invoice', '⚠️ Invoice', '#f59e0b'],
+                    ['overdue', '🔴 Overdue', '#ef4444'],
+                    ['free', '🆓 Free', '#3b82f6'],
+                    ['package', '📦 Package', '#a855f7'],
+                    ['override', '⚡ Override', '#eab308']
+                  ].map(([status, label, color]) => (
+                    <button 
+                      key={status}
+                      onClick={() => onUpdateSession(session.id, { payment_status: status })}
+                      style={{
+                        background: session.payment_status === status ? color : 'var(--bg1)',
+                        color: session.payment_status === status ? '#fff' : 'var(--text2)',
+                        border: `2px solid ${color}`,
+                        padding: '.5rem .9rem',
+                        borderRadius: '6px',
+                        fontSize: '.85rem',
+                        cursor: 'pointer',
+                        fontWeight: session.payment_status === status ? '600' : '400',
+                        transition: 'all 0.2s'
+                      }}
+                      onMouseEnter={e => {
+                        if (session.payment_status !== status) {
+                          e.currentTarget.style.background = color;
+                          e.currentTarget.style.color = '#fff';
+                        }
+                      }}
+                      onMouseLeave={e => {
+                        if (session.payment_status !== status) {
+                          e.currentTarget.style.background = 'var(--bg1)';
+                          e.currentTarget.style.color = 'var(--text2)';
+                        }
+                      }}
+                    >
+                      {label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Payment Code Input */}
+              <div style={{marginBottom: '1rem'}}>
+                <div style={{fontSize: '.85rem', color: 'var(--text3)', marginBottom: '.5rem'}}>Payment Code:</div>
+                <input 
+                  type="text"
+                  placeholder="e.g. C, F, S, G..."
+                  value={session.payment_code || ''}
+                  onChange={e => onUpdateSession(session.id, { payment_code: e.target.value })}
+                  style={{
+                    width: '100%',
+                    background: 'var(--bg1)',
+                    border: '1px solid var(--border2)',
+                    borderRadius: '6px',
+                    color: 'var(--text)',
+                    padding: '.7rem 1rem',
+                    fontSize: '.9rem',
+                    fontFamily: 'monospace',
+                    fontWeight: '600'
+                  }}
+                />
+              </div>
+
+              {/* Authorization Fields */}
+              {(session.payment_status === 'override' || session.payment_status === 'free') && (
+                <>
+                  <div style={{marginBottom: '1rem'}}>
+                    <div style={{fontSize: '.85rem', color: 'var(--text3)', marginBottom: '.5rem'}}>Authorized By:</div>
+                    <input 
+                      type="text"
+                      placeholder="Your name"
+                      value={session.authorized_by || ''}
+                      onChange={e => onUpdateSession(session.id, { authorized_by: e.target.value })}
+                      style={{
+                        width: '100%',
+                        background: 'var(--bg1)',
+                        border: '1px solid var(--border2)',
+                        borderRadius: '6px',
+                        color: 'var(--text)',
+                        padding: '.7rem 1rem',
+                        fontSize: '.9rem'
+                      }}
+                    />
+                  </div>
+                  <div>
+                    <div style={{fontSize: '.85rem', color: 'var(--text3)', marginBottom: '.5rem'}}>Reason:</div>
+                    <textarea 
+                      placeholder="Why was this authorized?"
+                      value={session.authorization_reason || ''}
+                      onChange={e => onUpdateSession(session.id, { authorization_reason: e.target.value })}
+                      style={{
+                        width: '100%',
+                        background: 'var(--bg1)',
+                        border: '1px solid var(--border2)',
+                        borderRadius: '6px',
+                        color: 'var(--text)',
+                        padding: '.7rem 1rem',
+                        fontSize: '.9rem',
+                        minHeight: '80px',
+                        resize: 'vertical'
+                      }}
+                    />
+                  </div>
+                </>
+              )}
+
+              {/* Helper Text */}
+              <div style={{
+                marginTop: '1rem',
+                padding: '.75rem',
+                background: 'var(--bg1)',
+                borderRadius: '6px',
+                fontSize: '.75rem',
+                color: 'var(--text3)',
+                lineHeight: '1.6'
+              }}>
+                💡 <b>Payment Codes:</b> C=Package, F=Free Trial, S=Single, G=Group, M=Makeup, P=Parent Discount, L=Loyalty
               </div>
             </div>
           )}
@@ -1538,7 +1731,11 @@ function AttendanceCalendar({ sessions, userRole, currentUserId, filterStudentId
               {recs.length > 0 && (
                 <div className="cal-pips">
                   {recs.slice(0,6).map((r,i) => (
-                    <div key={i} className="cal-pip" style={{background:statusColor(r.status)}}/>
+                    <div key={i} className="cal-pip" style={{
+                      background: statusColor(r.status),
+                      border: r.payment_status ? `2px solid ${paymentColor(r.payment_status)}` : 'none',
+                      boxSizing: 'border-box'
+                    }}/>
                   ))}
                 </div>
               )}
