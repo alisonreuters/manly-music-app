@@ -550,7 +550,7 @@
               studentPhone,
               instrument,
               package: selectedPackage,
-              amount: selectedPackage === 'single' ? 7500 : 60000 // $75 or $600
+              amount: selectedPackage === 'single' ? 5500 : 50000 // $75 or $600
             })
           });
 
@@ -774,7 +774,7 @@
                       className={`price-option ${selectedPackage === 'single' ? 'selected' : ''}`}
                       onClick={() => setSelectedPackage('single')}
                     >
-                      <div className="price-amount">$75</div>
+                      <div className="price-amount">$55</div>
                       <div className="price-label">Single Lesson</div>
                     </div>
                     <div 
@@ -787,7 +787,7 @@
                     </div>
                   </div>
                   <button className="btn" onClick={handlePayment}>
-                    Pay ${selectedPackage === 'single' ? '75' : '600'} with Stripe
+                    Pay ${selectedPackage === 'single' ? '55' : '500'} with Stripe
                   </button>
                 </>
               )}
