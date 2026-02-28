@@ -451,8 +451,7 @@
     const { useState, useEffect } = React;
 
     // Stripe public key (you'll need to add your actual key)
-    const stripe = Stripe('pk_live_51T5elhQW5UWscwv1GXwUxQaV3T8AJqxzKOlpxJIURVqKeHPffYLgkbLRVHQb3NXx8sPtSpOppiyFcfKKT2bOnAPc00aaphxpBO
-');
+const stripe = Stripe('pk_live_51T5elhQW5UWscwv1GXwUxQaV3T8AJqxzKOlpxJIURVqKeHPffYLgkbLRVHQb3NXx8sPtSpOppiyFcfKKT2bOnAPc00aaphxpBO');
 
     function BookingApp() {
       const [step, setStep] = useState(1);
