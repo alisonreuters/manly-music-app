@@ -3,6 +3,10 @@
   "version": "1.0.0",
   "description": "Netlify functions for Manly Music app",
   "dependencies": {
-    "twilio": "^4.19.0"
+    "twilio": "^4.19.0",
+    "@supabase/supabase-js": "^2.39.0",
+    "stripe": "^14.11.0"
   }
 }
+  
+
