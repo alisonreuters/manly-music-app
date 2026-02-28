@@ -1,0 +1,997 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Book a Lesson - Manly Music</title>
+  <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+  <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="https://js.stripe.com/v3/"></script>
+  <style>
+    :root {
+      --bg: #080b10;
+      --bg1: #0d1117;
+      --bg2: #111620;
+      --bg3: #161c28;
+      --border: #1e2535;
+      --border2: #252d3e;
+      --text: #e2e8f0;
+      --text2: #94a3b8;
+      --text3: #4a5568;
+      --accent: #6b8cff;
+      --green: #22c55e;
+      --blue: #3b82f6;
+      --manly-blue: #4a90e2;
+      --manly-teal: #7aa8ab;
+      --radius: 8px;
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: linear-gradient(135deg, var(--bg) 0%, var(--bg1) 100%);
+      color: var(--text);
+      min-height: 100vh;
+      padding: 2rem 1rem;
+    }
+
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+
+    .header {
+      text-align: center;
+      margin-bottom: 3rem;
+    }
+
+    .header h1 {
+      font-size: 2.5rem;
+      font-weight: 600;
+      background: linear-gradient(135deg, var(--manly-blue) 0%, var(--manly-teal) 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      margin-bottom: 0.5rem;
+    }
+
+    .header p {
+      color: var(--text2);
+      font-size: 1.1rem;
+    }
+
+    .booking-grid {
+      display: grid;
+      grid-template-columns: 1fr 400px;
+      gap: 2rem;
+      margin-bottom: 2rem;
+    }
+
+    @media (max-width: 900px) {
+      .booking-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .card {
+      background: var(--bg2);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 2rem;
+    }
+
+    .card h2 {
+      font-size: 1.5rem;
+      margin-bottom: 1.5rem;
+      color: var(--text);
+    }
+
+    .step-indicator {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 2rem;
+      padding: 0 1rem;
+    }
+
+    .step {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 0.5rem;
+      flex: 1;
+      position: relative;
+    }
+
+    .step:not(:last-child)::after {
+      content: '';
+      position: absolute;
+      top: 18px;
+      left: 60%;
+      right: -40%;
+      height: 2px;
+      background: var(--border2);
+    }
+
+    .step.active:not(:last-child)::after {
+      background: var(--accent);
+    }
+
+    .step-number {
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      background: var(--bg3);
+      border: 2px solid var(--border2);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 600;
+      font-size: 0.9rem;
+      position: relative;
+      z-index: 1;
+    }
+
+    .step.active .step-number {
+      background: var(--accent);
+      border-color: var(--accent);
+      color: white;
+    }
+
+    .step.completed .step-number {
+      background: var(--green);
+      border-color: var(--green);
+      color: white;
+    }
+
+    .step-label {
+      font-size: 0.75rem;
+      color: var(--text3);
+      text-align: center;
+    }
+
+    .step.active .step-label {
+      color: var(--text2);
+      font-weight: 500;
+    }
+
+    .tutor-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+      gap: 1rem;
+      margin-bottom: 1.5rem;
+    }
+
+    .tutor-card {
+      background: var(--bg3);
+      border: 2px solid var(--border);
+      border-radius: var(--radius);
+      padding: 1.25rem;
+      cursor: pointer;
+      transition: all 0.2s;
+      text-align: center;
+    }
+
+    .tutor-card:hover {
+      border-color: var(--accent);
+      transform: translateY(-2px);
+    }
+
+    .tutor-card.selected {
+      border-color: var(--accent);
+      background: linear-gradient(135deg, rgba(107, 140, 255, 0.1) 0%, rgba(74, 144, 226, 0.1) 100%);
+    }
+
+    .tutor-avatar {
+      width: 80px;
+      height: 80px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, var(--accent) 0%, var(--blue) 100%);
+      margin: 0 auto 1rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 2rem;
+      font-weight: 600;
+      color: white;
+    }
+
+    .tutor-name {
+      font-weight: 600;
+      margin-bottom: 0.25rem;
+    }
+
+    .tutor-instrument {
+      font-size: 0.85rem;
+      color: var(--text3);
+    }
+
+    .calendar-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 1.5rem;
+    }
+
+    .calendar-nav {
+      display: flex;
+      gap: 0.5rem;
+      align-items: center;
+    }
+
+    .nav-btn {
+      background: var(--bg3);
+      border: 1px solid var(--border2);
+      color: var(--text2);
+      padding: 0.5rem 0.75rem;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 1rem;
+    }
+
+    .nav-btn:hover {
+      border-color: var(--accent);
+      color: var(--text);
+    }
+
+    .calendar-month {
+      font-weight: 600;
+      font-size: 1.1rem;
+    }
+
+    .time-slots {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+      gap: 0.75rem;
+    }
+
+    .time-slot {
+      background: var(--bg3);
+      border: 2px solid var(--border);
+      border-radius: 6px;
+      padding: 0.75rem;
+      text-align: center;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .time-slot:hover:not(.booked) {
+      border-color: var(--accent);
+      transform: translateY(-2px);
+    }
+
+    .time-slot.selected {
+      border-color: var(--green);
+      background: linear-gradient(135deg, rgba(34, 197, 94, 0.1) 0%, rgba(34, 197, 94, 0.05) 100%);
+    }
+
+    .time-slot.booked {
+      opacity: 0.4;
+      cursor: not-allowed;
+      background: var(--bg1);
+    }
+
+    .time-slot-time {
+      font-weight: 600;
+      margin-bottom: 0.25rem;
+    }
+
+    .time-slot-duration {
+      font-size: 0.75rem;
+      color: var(--text3);
+    }
+
+    .form-group {
+      margin-bottom: 1.5rem;
+    }
+
+    .form-group label {
+      display: block;
+      margin-bottom: 0.5rem;
+      color: var(--text2);
+      font-size: 0.9rem;
+      font-weight: 500;
+    }
+
+    .form-group input,
+    .form-group select {
+      width: 100%;
+      background: var(--bg3);
+      border: 1px solid var(--border2);
+      color: var(--text);
+      padding: 0.75rem;
+      border-radius: 6px;
+      font-size: 0.95rem;
+    }
+
+    .form-group input:focus,
+    .form-group select:focus {
+      outline: none;
+      border-color: var(--accent);
+    }
+
+    .summary-item {
+      display: flex;
+      justify-content: space-between;
+      padding: 0.75rem 0;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .summary-item:last-child {
+      border-bottom: none;
+      padding-top: 1rem;
+      font-weight: 600;
+      font-size: 1.1rem;
+    }
+
+    .summary-label {
+      color: var(--text3);
+    }
+
+    .summary-value {
+      color: var(--text);
+      font-weight: 500;
+    }
+
+    .btn {
+      background: var(--accent);
+      color: white;
+      border: none;
+      padding: 1rem 2rem;
+      border-radius: 6px;
+      font-size: 1rem;
+      font-weight: 600;
+      cursor: pointer;
+      width: 100%;
+      transition: all 0.2s;
+    }
+
+    .btn:hover {
+      background: var(--blue);
+      transform: translateY(-1px);
+    }
+
+    .btn:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    .btn-secondary {
+      background: var(--bg3);
+      border: 1px solid var(--border2);
+      color: var(--text2);
+    }
+
+    .btn-secondary:hover {
+      background: var(--bg2);
+      color: var(--text);
+    }
+
+    .price-toggle {
+      display: flex;
+      gap: 0.75rem;
+      margin-bottom: 1.5rem;
+    }
+
+    .price-option {
+      flex: 1;
+      background: var(--bg3);
+      border: 2px solid var(--border);
+      border-radius: var(--radius);
+      padding: 1.25rem;
+      cursor: pointer;
+      transition: all 0.2s;
+      text-align: center;
+    }
+
+    .price-option:hover {
+      border-color: var(--accent);
+    }
+
+    .price-option.selected {
+      border-color: var(--green);
+      background: linear-gradient(135deg, rgba(34, 197, 94, 0.1) 0%, rgba(34, 197, 94, 0.05) 100%);
+    }
+
+    .price-amount {
+      font-size: 1.5rem;
+      font-weight: 600;
+      color: var(--text);
+      margin-bottom: 0.25rem;
+    }
+
+    .price-label {
+      font-size: 0.85rem;
+      color: var(--text3);
+    }
+
+    .price-save {
+      display: inline-block;
+      background: var(--green);
+      color: white;
+      padding: 0.2rem 0.5rem;
+      border-radius: 4px;
+      font-size: 0.7rem;
+      font-weight: 600;
+      margin-top: 0.5rem;
+    }
+
+    .loading {
+      text-align: center;
+      padding: 2rem;
+      color: var(--text3);
+    }
+
+    .success-message {
+      text-align: center;
+      padding: 3rem 2rem;
+    }
+
+    .success-icon {
+      font-size: 4rem;
+      margin-bottom: 1rem;
+    }
+
+    .success-message h2 {
+      color: var(--green);
+      margin-bottom: 1rem;
+    }
+
+    .success-message p {
+      color: var(--text2);
+      line-height: 1.6;
+    }
+  </style>
+</head>
+<body>
+  <div id="root"></div>
+
+  <script type="text/babel">
+    const { useState, useEffect } = React;
+
+    // Stripe public key
+    const stripe = Stripe('pk_live_51T5elhQW5UWscwv1GXwUxQaV3T8AJqxzKOlpxJIURVqKeHPffYLgkbLRVHQb3NXx8sPtSpOppiyFcfKKT2bOnAPc00aaphxpBO');
+
+    // Supabase client (for loading tutors and checking availability)
+    const SUPABASE_URL = 'https://oozejvfuwqomgnwbvwtv.supabase.co';
+    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9vemVqdmZ1d3FvbWdud2J2d3R2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzY2NDgwMzYsImV4cCI6MjA1MjIyNDAzNn0.UHEdQqTMEuuUv4yPtUqYOTmmZeaRpS1pZFBo0Hp-iU4';
+    const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+    function BookingApp() {
+      const [step, setStep] = useState(1);
+      const [loading, setLoading] = useState(true);
+      const [tutors, setTutors] = useState([]);
+      const [selectedTutor, setSelectedTutor] = useState(null);
+      const [selectedDate, setSelectedDate] = useState(null);
+      const [selectedTime, setSelectedTime] = useState(null);
+      const [selectedPackage, setSelectedPackage] = useState('single');
+      const [studentName, setStudentName] = useState('');
+      const [studentEmail, setStudentEmail] = useState('');
+      const [studentPhone, setStudentPhone] = useState('');
+      const [instrument, setInstrument] = useState('Piano');
+      const [bookedSessions, setBookedSessions] = useState([]);
+      const [currentMonth, setCurrentMonth] = useState(new Date());
+      const [success, setSuccess] = useState(false);
+      const [canceled, setCanceled] = useState(false);
+
+      // Check URL parameters for payment result
+      useEffect(() => {
+        const urlParams = new URLSearchParams(window.location.search);
+        if (urlParams.get('success') === 'true') {
+          setSuccess(true);
+        }
+        if (urlParams.get('canceled') === 'true') {
+          setCanceled(true);
+        }
+      }, []);
+
+      // Load tutors and existing sessions
+      useEffect(() => {
+        loadData();
+      }, []);
+
+      async function loadData() {
+        try {
+          // Load real tutors from Supabase
+          const { data: tutorsData, error: tutorsError } = await supabase
+            .from('users')
+            .select('*')
+            .eq('role', 'tutor')
+            .order('name');
+          
+          if (tutorsError) throw tutorsError;
+          
+          // Format tutors for display
+          const formattedTutors = tutorsData.map(t => ({
+            id: t.id,
+            name: t.name,
+            instruments: t.instruments_taught || 'Piano, Guitar, Drums',
+            initials: t.name.split(' ').map(n => n[0]).join('')
+          }));
+          
+          setTutors(formattedTutors);
+          
+          // Load existing sessions to check availability
+          const { data: sessionsData, error: sessionsError } = await supabase
+            .from('sessions')
+            .select('*')
+            .gte('date', new Date().toISOString().split('T')[0]);
+          
+          if (!sessionsError && sessionsData) {
+            setBookedSessions(sessionsData.map(s => ({
+              date: s.date,
+              tutorId: s.tutor_id,
+              startTime: s.start_time
+            })));
+          }
+          
+          setLoading(false);
+        } catch (error) {
+          console.error('Error loading data:', error);
+          // Fallback to demo tutors if database fails
+          setTutors([
+            { id: 1, name: 'Jake Griffiths', instruments: 'Piano, Guitar, Drums', initials: 'JG' },
+          ]);
+          setLoading(false);
+        }
+      }
+
+      // Generate available time slots
+      function getAvailableSlots(date, tutorId) {
+        const slots = [];
+        const workStart = 9; // 9 AM
+        const workEnd = 17; // 5 PM
+        
+        for (let hour = workStart; hour < workEnd; hour++) {
+          for (let minute of [0, 30]) {
+            const slotTime = `${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')}`;
+            const isBooked = bookedSessions.some(s => 
+              s.date === date && 
+              s.tutorId === tutorId && 
+              s.startTime === slotTime
+            );
+            
+            slots.push({
+              time: slotTime,
+              booked: isBooked,
+              display: formatTime(slotTime)
+            });
+          }
+        }
+        
+        return slots;
+      }
+
+      function formatTime(time) {
+        const [h, m] = time.split(':').map(Number);
+        const hour = h > 12 ? h - 12 : h === 0 ? 12 : h;
+        const period = h >= 12 ? 'PM' : 'AM';
+        return `${hour}:${m.toString().padStart(2, '0')} ${period}`;
+      }
+
+      function formatDate(date) {
+        return new Date(date).toLocaleDateString('en-AU', { 
+          weekday: 'long', 
+          year: 'numeric', 
+          month: 'long', 
+          day: 'numeric' 
+        });
+      }
+
+      async function handlePayment() {
+        setLoading(true);
+        
+        try {
+          // Call your Netlify function to create Stripe Checkout session
+          const response = await fetch('/.netlify/functions/create-checkout', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              tutorId: selectedTutor.id,
+              tutorName: selectedTutor.name,
+              date: selectedDate,
+              time: selectedTime,
+              studentName,
+              studentEmail,
+              studentPhone,
+              instrument,
+              package: selectedPackage,
+              amount: selectedPackage === 'single' ? 5500 : 50000 // $55 or $500 in cents
+            })
+          });
+
+          const data = await response.json();
+          
+          if (data.error) {
+            throw new Error(data.error);
+          }
+
+          // Redirect to Stripe Checkout
+          window.location.href = data.checkoutUrl;
+          
+        } catch (error) {
+          console.error('Payment error:', error);
+          alert('Payment failed: ' + error.message);
+          setLoading(false);
+        }
+      }
+
+      if (loading) {
+        return <div className="loading">Loading...</div>;
+      }
+
+      if (canceled) {
+        return (
+          <div className="container">
+            <div className="card success-message">
+              <div className="success-icon" style={{fontSize: '4rem'}}>❌</div>
+              <h2 style={{color: 'var(--amber)'}}>Payment Canceled</h2>
+              <p>
+                Your payment was canceled.<br/><br/>
+                No charges were made to your card.<br/><br/>
+                <button 
+                  className="btn btn-primary" 
+                  onClick={() => {
+                    setCanceled(false);
+                    window.history.replaceState({}, '', '/booking.html');
+                  }}
+                  style={{marginTop: '1rem'}}
+                >
+                  Try Again
+                </button>
+              </p>
+            </div>
+          </div>
+        );
+      }
+
+      if (success) {
+        return (
+          <div className="container">
+            <div className="card success-message">
+              <div className="success-icon">✅</div>
+              <h2>Payment Successful!</h2>
+              <p>
+                Thank you for your booking!<br/><br/>
+                Your lesson has been confirmed and you'll receive an SMS confirmation shortly.<br/><br/>
+                We'll see you soon at Manly Music!<br/><br/>
+                <button 
+                  className="btn btn-primary" 
+                  onClick={() => {
+                    setSuccess(false);
+                    setStep(1);
+                    window.history.replaceState({}, '', '/booking.html');
+                  }}
+                  style={{marginTop: '1rem'}}
+                >
+                  Book Another Lesson
+                </button>
+              </p>
+            </div>
+          </div>
+        );
+      }
+
+      return (
+        <div className="container">
+          <div className="header">
+            <h1>Book Your Music Lesson</h1>
+            <p>Choose your tutor, pick a time, and pay securely online</p>
+          </div>
+
+          <div className="step-indicator">
+            {['Select Tutor', 'Choose Time', 'Your Details', 'Payment'].map((label, idx) => (
+              <div key={idx} className={`step ${step > idx + 1 ? 'completed' : step === idx + 1 ? 'active' : ''}`}>
+                <div className="step-number">{step > idx + 1 ? '✓' : idx + 1}</div>
+                <div className="step-label">{label}</div>
+              </div>
+            ))}
+          </div>
+
+          <div className="booking-grid">
+            <div className="card">
+              {step === 1 && (
+                <>
+                  <h2>Select Your Tutor</h2>
+                  <div style={{
+                    background: 'var(--bg3)',
+                    border: '1px solid var(--accent)',
+                    borderRadius: 'var(--radius)',
+                    padding: '1rem',
+                    marginBottom: '1.5rem',
+                    fontSize: '0.9rem',
+                    color: 'var(--text2)',
+                    lineHeight: '1.6'
+                  }}>
+                    💡 <strong>Note:</strong> While you can select a preferred tutor, final tutor assignment will be based on your chosen instrument, skill level, and tutor availability to ensure the best match for your learning journey.
+                  </div>
+                  <div className="tutor-grid">
+                    {tutors.map(tutor => (
+                      <div 
+                        key={tutor.id}
+                        className={`tutor-card ${selectedTutor?.id === tutor.id ? 'selected' : ''}`}
+                        onClick={() => {
+                          setSelectedTutor(tutor);
+                          setStep(2);
+                        }}
+                      >
+                        <div className="tutor-avatar">{tutor.initials}</div>
+                        <div className="tutor-name">{tutor.name}</div>
+                        <div className="tutor-instrument">{tutor.instruments}</div>
+                      </div>
+                    ))}
+                  </div>
+                </>
+              )}
+
+              {step === 2 && selectedTutor && (
+                <>
+                  <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem'}}>
+                    <h2>Choose Date & Time</h2>
+                    <button 
+                      className="btn btn-sm btn-secondary" 
+                      onClick={() => {
+                        setSelectedTutor(null);
+                        setSelectedDate(null);
+                        setSelectedTime(null);
+                        setStep(1);
+                      }}
+                    >
+                      ← Change Tutor
+                    </button>
+                  </div>
+                  <div className="calendar-header">
+                    <button className="nav-btn" onClick={() => {
+                      const newMonth = new Date(currentMonth);
+                      newMonth.setMonth(newMonth.getMonth() - 1);
+                      setCurrentMonth(newMonth);
+                    }}>‹</button>
+                    <div className="calendar-month">
+                      {currentMonth.toLocaleDateString('en-AU', { month: 'long', year: 'numeric' })}
+                    </div>
+                    <button className="nav-btn" onClick={() => {
+                      const newMonth = new Date(currentMonth);
+                      newMonth.setMonth(newMonth.getMonth() + 1);
+                      setCurrentMonth(newMonth);
+                    }}>›</button>
+                  </div>
+                  
+                  {selectedDate ? (
+                    <>
+                      <p style={{marginBottom: '1rem', color: 'var(--text2)'}}>
+                        Selected: {formatDate(selectedDate)}
+                      </p>
+                      <div className="time-slots">
+                        {getAvailableSlots(selectedDate, selectedTutor.id).map(slot => (
+                          <div
+                            key={slot.time}
+                            className={`time-slot ${slot.booked ? 'booked' : ''} ${selectedTime === slot.time ? 'selected' : ''}`}
+                            onClick={() => {
+                              if (!slot.booked) {
+                                setSelectedTime(slot.time);
+                                setStep(3);
+                              }
+                            }}
+                          >
+                            <div className="time-slot-time">{slot.display}</div>
+                            <div className="time-slot-duration">30 min</div>
+                          </div>
+                        ))}
+                      </div>
+                      <button className="btn btn-secondary" style={{marginTop: '1rem'}} onClick={() => setSelectedDate(null)}>
+                        ← Back to Calendar
+                      </button>
+                    </>
+                  ) : (
+                    <div>
+                      <p style={{color: 'var(--text3)', marginBottom: '1rem', fontSize: '0.9rem'}}>
+                        Select a date to see available times
+                      </p>
+                      {/* Full month calendar */}
+                      <div style={{marginBottom: '1rem'}}>
+                        {/* Day headers */}
+                        <div style={{display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: '0.5rem', marginBottom: '0.5rem'}}>
+                          {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map(day => (
+                            <div key={day} style={{textAlign: 'center', fontSize: '0.75rem', color: 'var(--text3)', fontWeight: '600'}}>
+                              {day}
+                            </div>
+                          ))}
+                        </div>
+                        
+                        {/* Calendar grid */}
+                        <div style={{display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: '0.5rem'}}>
+                          {(() => {
+                            const today = new Date();
+                            const year = currentMonth.getFullYear();
+                            const month = currentMonth.getMonth();
+                            
+                            // Get first day of month and days in month
+                            const firstDay = new Date(year, month, 1).getDay();
+                            const daysInMonth = new Date(year, month + 1, 0).getDate();
+                            
+                            const cells = [];
+                            
+                            // Empty cells before month starts
+                            for (let i = 0; i < firstDay; i++) {
+                              cells.push(
+                                <div key={`empty-${i}`} style={{padding: '0.75rem'}} />
+                              );
+                            }
+                            
+                            // Days of month
+                            for (let day = 1; day <= daysInMonth; day++) {
+                              const date = new Date(year, month, day);
+                              const dateStr = date.toISOString().split('T')[0];
+                              const isPast = date < today.setHours(0,0,0,0);
+                              const isToday = date.toDateString() === new Date().toDateString();
+                              
+                              cells.push(
+                                <div
+                                  key={day}
+                                  style={{
+                                    background: isPast ? 'var(--bg1)' : 'var(--bg3)',
+                                    border: isToday ? '2px solid var(--accent)' : '2px solid var(--border)',
+                                    borderRadius: '6px',
+                                    padding: '0.75rem',
+                                    textAlign: 'center',
+                                    cursor: isPast ? 'not-allowed' : 'pointer',
+                                    opacity: isPast ? 0.4 : 1,
+                                    transition: 'all 0.2s'
+                                  }}
+                                  onClick={() => !isPast && setSelectedDate(dateStr)}
+                                  onMouseEnter={e => !isPast && (e.currentTarget.style.borderColor = 'var(--accent)')}
+                                  onMouseLeave={e => !isPast && !isToday && (e.currentTarget.style.borderColor = 'var(--border)')}
+                                >
+                                  <div style={{fontWeight: '600'}}>
+                                    {day}
+                                  </div>
+                                </div>
+                              );
+                            }
+                            
+                            return cells;
+                          })()}
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </>
+              )}
+
+              {step === 3 && (
+                <>
+                  <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem'}}>
+                    <h2>Your Details</h2>
+                    <button 
+                      className="btn btn-sm btn-secondary" 
+                      onClick={() => setStep(2)}
+                    >
+                      ← Back
+                    </button>
+                  </div>
+                  <div className="form-group">
+                    <label>Student Name *</label>
+                    <input 
+                      type="text" 
+                      value={studentName}
+                      onChange={e => setStudentName(e.target.value)}
+                      placeholder="Enter student's name"
+                    />
+                  </div>
+                  <div className="form-group">
+                    <label>Email *</label>
+                    <input 
+                      type="email" 
+                      value={studentEmail}
+                      onChange={e => setStudentEmail(e.target.value)}
+                      placeholder="your@email.com"
+                    />
+                  </div>
+                  <div className="form-group">
+                    <label>Phone *</label>
+                    <input 
+                      type="tel" 
+                      value={studentPhone}
+                      onChange={e => setStudentPhone(e.target.value)}
+                      placeholder="04XX XXX XXX"
+                    />
+                  </div>
+                  <div className="form-group">
+                    <label>Instrument *</label>
+                    <select value={instrument} onChange={e => setInstrument(e.target.value)}>
+                      <option>Piano</option>
+                      <option>Guitar</option>
+                      <option>Drums</option>
+                      <option>Violin</option>
+                      <option>Voice</option>
+                    </select>
+                  </div>
+                  <button 
+                    className="btn"
+                    disabled={!studentName || !studentEmail || !studentPhone}
+                    onClick={() => setStep(4)}
+                  >
+                    Continue to Payment
+                  </button>
+                </>
+              )}
+
+              {step === 4 && (
+                <>
+                  <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem'}}>
+                    <h2>Choose Package & Pay</h2>
+                    <button 
+                      className="btn btn-sm btn-secondary" 
+                      onClick={() => setStep(3)}
+                    >
+                      ← Back
+                    </button>
+                  </div>
+                  <div className="price-toggle">
+                    <div 
+                      className={`price-option ${selectedPackage === 'single' ? 'selected' : ''}`}
+                      onClick={() => setSelectedPackage('single')}
+                    >
+                      <div className="price-amount">$75</div>
+                      <div className="price-label">Single Lesson</div>
+                    </div>
+                    <div 
+                      className={`price-option ${selectedPackage === 'package' ? 'selected' : ''}`}
+                      onClick={() => setSelectedPackage('package')}
+                    >
+                      <div className="price-amount">$600</div>
+                      <div className="price-label">10-Lesson Package</div>
+                      <div className="price-save">SAVE $150</div>
+                    </div>
+                  </div>
+                  <button className="btn" onClick={handlePayment}>
+                    Pay ${selectedPackage === 'single' ? '75' : '600'} with Stripe
+                  </button>
+                </>
+              )}
+            </div>
+
+            <div className="card">
+              <h2>Booking Summary</h2>
+              <div className="summary-item">
+                <span className="summary-label">Tutor</span>
+                <span className="summary-value">{selectedTutor?.name || '—'}</span>
+              </div>
+              <div className="summary-item">
+                <span className="summary-label">Date</span>
+                <span className="summary-value">
+                  {selectedDate ? formatDate(selectedDate) : '—'}
+                </span>
+              </div>
+              <div className="summary-item">
+                <span className="summary-label">Time</span>
+                <span className="summary-value">
+                  {selectedTime ? formatTime(selectedTime) : '—'}
+                </span>
+              </div>
+              <div className="summary-item">
+                <span className="summary-label">Duration</span>
+                <span className="summary-value">30 minutes</span>
+              </div>
+              <div className="summary-item">
+                <span className="summary-label">Instrument</span>
+                <span className="summary-value">{instrument || '—'}</span>
+              </div>
+              <div className="summary-item">
+                <span className="summary-label">Total</span>
+                <span className="summary-value" style={{color: 'var(--green)', fontSize: '1.3rem'}}>
+                  ${selectedPackage === 'single' ? '75' : '600'}
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    ReactDOM.render(<BookingApp />, document.getElementById('root'));
+  </script>
+</body>
+</html>
