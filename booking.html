@@ -451,7 +451,7 @@
     const { useState, useEffect } = React;
 
     // Stripe public key (you'll need to add your actual key)
-    const stripe = Stripe('pk_test_51T5elsHhURtZ0i5rNPXRnmruesoxE2JJOwEuYL6fbfSIa6F3cHkTxDiFtoME2uQpF0Dxi0VrmSravj1r5mc2FPUB00AjjBNhEm');
+    const stripe = Stripe('pk_test_YOUR_STRIPE_KEY_HERE');
 
     function BookingApp() {
       const [step, setStep] = useState(1);
@@ -468,6 +468,18 @@
       const [bookedSessions, setBookedSessions] = useState([]);
       const [currentMonth, setCurrentMonth] = useState(new Date());
       const [success, setSuccess] = useState(false);
+      const [canceled, setCanceled] = useState(false);
+
+      // Check URL parameters for payment result
+      useEffect(() => {
+        const urlParams = new URLSearchParams(window.location.search);
+        if (urlParams.get('success') === 'true') {
+          setSuccess(true);
+        }
+        if (urlParams.get('canceled') === 'true') {
+          setCanceled(true);
+        }
+      }, []);
 
       // Load tutors and existing sessions
       useEffect(() => {
@@ -537,12 +549,13 @@
         setLoading(true);
         
         try {
-          // Call your Netlify function to create payment intent
-          const response = await fetch('/.netlify/functions/create-booking', {
+          // Call your Netlify function to create Stripe Checkout session
+          const response = await fetch('/.netlify/functions/create-checkout', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
               tutorId: selectedTutor.id,
+              tutorName: selectedTutor.name,
               date: selectedDate,
               time: selectedTime,
               studentName,
@@ -550,21 +563,22 @@
               studentPhone,
               instrument,
               package: selectedPackage,
-              amount: selectedPackage === 'single' ? 5500 : 50000 // $75 or $600
+              amount: selectedPackage === 'single' ? 5500 : 50000 // $55 or $500 in cents
             })
           });
 
-          const { clientSecret } = await response.json();
+          const data = await response.json();
+          
+          if (data.error) {
+            throw new Error(data.error);
+          }
 
-          // Redirect to Stripe Checkout or use Payment Element
-          // For now, just show success
-          setSuccess(true);
-          setStep(5);
+          // Redirect to Stripe Checkout
+          window.location.href = data.checkoutUrl;
           
         } catch (error) {
           console.error('Payment error:', error);
-          alert('Payment failed. Please try again.');
-        } finally {
+          alert('Payment failed: ' + error.message);
           setLoading(false);
         }
       }
@@ -573,19 +587,52 @@
         return <div className="loading">Loading...</div>;
       }
 
+      if (canceled) {
+        return (
+          <div className="container">
+            <div className="card success-message">
+              <div className="success-icon" style={{fontSize: '4rem'}}>❌</div>
+              <h2 style={{color: 'var(--amber)'}}>Payment Canceled</h2>
+              <p>
+                Your payment was canceled.<br/><br/>
+                No charges were made to your card.<br/><br/>
+                <button 
+                  className="btn btn-primary" 
+                  onClick={() => {
+                    setCanceled(false);
+                    window.history.replaceState({}, '', '/booking.html');
+                  }}
+                  style={{marginTop: '1rem'}}
+                >
+                  Try Again
+                </button>
+              </p>
+            </div>
+          </div>
+        );
+      }
+
       if (success) {
         return (
           <div className="container">
             <div className="card success-message">
               <div className="success-icon">✅</div>
-              <h2>Booking Confirmed!</h2>
+              <h2>Payment Successful!</h2>
               <p>
-                Thank you, {studentName}!<br/><br/>
-                Your lesson with {selectedTutor?.name} is confirmed for:<br/>
-                <strong>{formatDate(selectedDate)} at {formatTime(selectedTime)}</strong>
-                <br/><br/>
-                You'll receive a confirmation SMS shortly.<br/>
-                See you soon!
+                Thank you for your booking!<br/><br/>
+                Your lesson has been confirmed and you'll receive an SMS confirmation shortly.<br/><br/>
+                We'll see you soon at Manly Music!<br/><br/>
+                <button 
+                  className="btn btn-primary" 
+                  onClick={() => {
+                    setSuccess(false);
+                    setStep(1);
+                    window.history.replaceState({}, '', '/booking.html');
+                  }}
+                  style={{marginTop: '1rem'}}
+                >
+                  Book Another Lesson
+                </button>
               </p>
             </div>
           </div>
@@ -682,34 +729,71 @@
                       <p style={{color: 'var(--text3)', marginBottom: '1rem', fontSize: '0.9rem'}}>
                         Select a date to see available times
                       </p>
-                      {/* Simple date picker - in production use a proper calendar component */}
-                      <div style={{display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: '0.5rem'}}>
-                        {Array.from({length: 14}, (_, i) => {
-                          const date = new Date();
-                          date.setDate(date.getDate() + i);
-                          const dateStr = date.toISOString().split('T')[0];
-                          return (
-                            <div
-                              key={i}
-                              style={{
-                                background: 'var(--bg3)',
-                                border: '2px solid var(--border)',
-                                borderRadius: '6px',
-                                padding: '0.75rem',
-                                textAlign: 'center',
-                                cursor: 'pointer'
-                              }}
-                              onClick={() => setSelectedDate(dateStr)}
-                            >
-                              <div style={{fontSize: '0.75rem', color: 'var(--text3)'}}>
-                                {date.toLocaleDateString('en-AU', { weekday: 'short' })}
-                              </div>
-                              <div style={{fontWeight: '600', marginTop: '0.25rem'}}>
-                                {date.getDate()}
-                              </div>
+                      {/* Full month calendar */}
+                      <div style={{marginBottom: '1rem'}}>
+                        {/* Day headers */}
+                        <div style={{display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: '0.5rem', marginBottom: '0.5rem'}}>
+                          {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map(day => (
+                            <div key={day} style={{textAlign: 'center', fontSize: '0.75rem', color: 'var(--text3)', fontWeight: '600'}}>
+                              {day}
                             </div>
-                          );
-                        })}
+                          ))}
+                        </div>
+                        
+                        {/* Calendar grid */}
+                        <div style={{display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: '0.5rem'}}>
+                          {(() => {
+                            const today = new Date();
+                            const year = currentMonth.getFullYear();
+                            const month = currentMonth.getMonth();
+                            
+                            // Get first day of month and days in month
+                            const firstDay = new Date(year, month, 1).getDay();
+                            const daysInMonth = new Date(year, month + 1, 0).getDate();
+                            
+                            const cells = [];
+                            
+                            // Empty cells before month starts
+                            for (let i = 0; i < firstDay; i++) {
+                              cells.push(
+                                <div key={`empty-${i}`} style={{padding: '0.75rem'}} />
+                              );
+                            }
+                            
+                            // Days of month
+                            for (let day = 1; day <= daysInMonth; day++) {
+                              const date = new Date(year, month, day);
+                              const dateStr = date.toISOString().split('T')[0];
+                              const isPast = date < today.setHours(0,0,0,0);
+                              const isToday = date.toDateString() === new Date().toDateString();
+                              
+                              cells.push(
+                                <div
+                                  key={day}
+                                  style={{
+                                    background: isPast ? 'var(--bg1)' : 'var(--bg3)',
+                                    border: isToday ? '2px solid var(--accent)' : '2px solid var(--border)',
+                                    borderRadius: '6px',
+                                    padding: '0.75rem',
+                                    textAlign: 'center',
+                                    cursor: isPast ? 'not-allowed' : 'pointer',
+                                    opacity: isPast ? 0.4 : 1,
+                                    transition: 'all 0.2s'
+                                  }}
+                                  onClick={() => !isPast && setSelectedDate(dateStr)}
+                                  onMouseEnter={e => !isPast && (e.currentTarget.style.borderColor = 'var(--accent)')}
+                                  onMouseLeave={e => !isPast && !isToday && (e.currentTarget.style.borderColor = 'var(--border)')}
+                                >
+                                  <div style={{fontWeight: '600'}}>
+                                    {day}
+                                  </div>
+                                </div>
+                              );
+                            }
+                            
+                            return cells;
+                          })()}
+                        </div>
                       </div>
                     </div>
                   )}
@@ -774,7 +858,7 @@
                       className={`price-option ${selectedPackage === 'single' ? 'selected' : ''}`}
                       onClick={() => setSelectedPackage('single')}
                     >
-                      <div className="price-amount">$55</div>
+                      <div className="price-amount">$75</div>
                       <div className="price-label">Single Lesson</div>
                     </div>
                     <div 
@@ -787,7 +871,7 @@
                     </div>
                   </div>
                   <button className="btn" onClick={handlePayment}>
-                    Pay ${selectedPackage === 'single' ? '55' : '500'} with Stripe
+                    Pay ${selectedPackage === 'single' ? '75' : '600'} with Stripe
                   </button>
                 </>
               )}
