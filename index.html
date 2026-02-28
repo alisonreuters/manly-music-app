@@ -3186,6 +3186,8 @@ function TutorDetailView({ tutor, onBack }) {
 // Includes date range filters, status filters, and tutor filters
 
 function ExportReportModal({ onClose, sessions, users }) {
+  console.log('🔍 ExportReportModal RENDERING!', { sessions: sessions?.length, users: users?.length });
+  
   const today = new Date();
   const firstDayOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
   const lastDayOfMonth = new Date(today.getFullYear(), today.getMonth() + 1, 0);
@@ -3286,6 +3288,8 @@ function ExportReportModal({ onClose, sessions, users }) {
       setExporting(false);
     }
   }
+
+  console.log('🎯 ExportReportModal about to render, filteredSessions:', filteredSessions.length);
 
   return (
     <>
