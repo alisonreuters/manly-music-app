@@ -708,12 +708,12 @@ function RecordingUpload({ sessionId, userRole, currentUserId, onUploadComplete 
       {uploading ? (
         <div>
           <div style={{ fontSize: '2rem', marginBottom: '0.5rem' }}>⏳</div>
-          <div style={{ color: 'var(--text2)', fontSize: '.9rem' }}>Uploading...</div>
+          <div style={{ color: '#e2e8f0', fontSize: '.9rem' }}>Uploading...</div>
         </div>
       ) : (
         <div>
           <div style={{ fontSize: '2rem', marginBottom: '0.5rem' }}>🎵</div>
-          <div style={{ color: 'var(--text)', fontSize: '.95rem', fontWeight: 500, marginBottom: '0.3rem' }}>
+          <div style={{ color: '#111', fontSize: '.95rem', fontWeight: 500, marginBottom: '0.3rem' }}>
             Upload {label}
           </div>
           <div style={{ color: 'var(--text3)', fontSize: '.85rem' }}>
@@ -838,7 +838,7 @@ function RecordingPlayer({ recording, onDelete, canDelete }) {
       {/* Header */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '0.75rem' }}>
         <div style={{ flex: 1 }}>
-          <div style={{ fontSize: '.9rem', fontWeight: 500, color: 'var(--text)', marginBottom: '0.25rem' }}>
+          <div style={{ fontSize: '.9rem', fontWeight: 500, color: '#111', marginBottom: '0.25rem' }}>
             {recording.fileName}
           </div>
           <div style={{ fontSize: '.75rem', color: 'var(--text3)' }}>
@@ -853,11 +853,11 @@ function RecordingPlayer({ recording, onDelete, canDelete }) {
           <button
             onClick={handleDownload}
             style={{
-              background: '#1a1f2e',
-              border: '1px solid var(--border2)',
+              background: 'white',
+              border: '2px solid #4a5568',
               borderRadius: '4px',
               padding: '0.4rem 0.7rem',
-              color: 'var(--text2)',
+              color: '#e2e8f0',
               cursor: 'pointer',
               fontSize: '.8rem'
             }}
@@ -869,8 +869,8 @@ function RecordingPlayer({ recording, onDelete, canDelete }) {
             <button
               onClick={handleDeleteClick}
               style={{
-                background: '#1a1f2e',
-                border: '1px solid var(--border2)',
+                background: 'white',
+                border: '2px solid #4a5568',
                 borderRadius: '4px',
                 padding: '0.4rem 0.7rem',
                 color: 'var(--red)',
@@ -915,7 +915,7 @@ function RecordingPlayer({ recording, onDelete, canDelete }) {
           style={{
             flex: 1,
             height: '6px',
-            background: '#1a1f2e',
+            background: 'white',
             borderRadius: '3px',
             cursor: 'pointer',
             position: 'relative'
@@ -1154,7 +1154,7 @@ function AssessmentSection({ session, userRole, onUpdateAssessment }) {
                 <div style={{
                   fontSize: '.85rem',
                   fontWeight: 500,
-                  color: 'var(--text2)',
+                  color: '#e2e8f0',
                   marginBottom: '.5rem'
                 }}>
                   {cat.label}
@@ -1170,7 +1170,7 @@ function AssessmentSection({ session, userRole, onUpdateAssessment }) {
 
           {/* Assessment Notes */}
           <div>
-            <div style={{fontSize: '.85rem', fontWeight: 500, color: 'var(--text2)', marginBottom: '.5rem'}}>
+            <div style={{fontSize: '.85rem', fontWeight: 500, color: '#e2e8f0', marginBottom: '.5rem'}}>
               Assessment Notes
             </div>
             {editing ? (
@@ -1181,9 +1181,9 @@ function AssessmentSection({ session, userRole, onUpdateAssessment }) {
                 style={{
                   width: '100%',
                   background: 'var(--bg1)',
-                  border: '1px solid var(--border2)',
+                  border: '2px solid #4a5568',
                   borderRadius: '6px',
-                  color: 'var(--text)',
+                  color: '#111',
                   padding: '1rem',
                   minHeight: '100px',
                   fontSize: '.92rem',
@@ -1197,7 +1197,7 @@ function AssessmentSection({ session, userRole, onUpdateAssessment }) {
                 borderRadius: '6px',
                 border: '1px solid var(--border)',
                 fontSize: '.92rem',
-                color: 'var(--text2)',
+                color: '#e2e8f0',
                 minHeight: '60px'
               }}>
                 {notes || <span style={{fontStyle: 'italic', color: 'var(--text3)'}}>No notes added</span>}
@@ -1516,9 +1516,9 @@ function SessionPanel({ session, userRole, currentUserId, onClose, onSaveRecordi
                   style={{
                     width: '100%',
                     background: 'var(--bg1)',
-                    border: '1px solid var(--border2)',
+                    border: '2px solid #4a5568',
                     borderRadius: '6px',
-                    color: 'var(--text)',
+                    color: '#111',
                     padding: '.7rem 1rem',
                     fontSize: '.9rem',
                     fontFamily: 'monospace',
@@ -1540,9 +1540,9 @@ function SessionPanel({ session, userRole, currentUserId, onClose, onSaveRecordi
                       style={{
                         width: '100%',
                         background: 'var(--bg1)',
-                        border: '1px solid var(--border2)',
+                        border: '2px solid #4a5568',
                         borderRadius: '6px',
-                        color: 'var(--text)',
+                        color: '#111',
                         padding: '.7rem 1rem',
                         fontSize: '.9rem'
                       }}
@@ -1557,9 +1557,9 @@ function SessionPanel({ session, userRole, currentUserId, onClose, onSaveRecordi
                       style={{
                         width: '100%',
                         background: 'var(--bg1)',
-                        border: '1px solid var(--border2)',
+                        border: '2px solid #4a5568',
                         borderRadius: '6px',
-                        color: 'var(--text)',
+                        color: '#111',
                         padding: '.7rem 1rem',
                         fontSize: '.9rem',
                         minHeight: '80px',
@@ -1798,7 +1798,7 @@ function AttendanceCalendar({ sessions, userRole, currentUserId, filterStudentId
               alignItems: 'center',
               fontSize: '.85rem',
               fontWeight: 600,
-              color: 'var(--text2)',
+              color: '#e2e8f0',
               padding: '.75rem 1rem',
               borderBottom: '1px solid var(--border)',
               position: 'sticky',
@@ -1812,7 +1812,7 @@ function AttendanceCalendar({ sessions, userRole, currentUserId, filterStudentId
                 style={{
                   background: 'none',
                   border: 'none',
-                  color: 'var(--text2)',
+                  color: '#e2e8f0',
                   fontSize: '1.2rem',
                   cursor: 'pointer',
                   padding: '0',
@@ -1852,12 +1852,12 @@ function AttendanceCalendar({ sessions, userRole, currentUserId, filterStudentId
                   }}
                 >
                   <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '.3rem'}}>
-                    <span style={{fontSize: '.9rem', fontWeight: 500, color: 'var(--text)'}}>
+                    <span style={{fontSize: '.9rem', fontWeight: 500, color: '#111'}}>
                       {fmtTime(session.startTime)} - {fmtTime(session.endTime)}
                     </span>
                     <span className={statusClass(session.status)}>{session.status}</span>
                   </div>
-                  <div style={{fontSize: '.85rem', color: 'var(--text2)'}}>
+                  <div style={{fontSize: '.85rem', color: '#e2e8f0'}}>
                     {student?.name} • {session.instrument} • {tutor?.name}
                   </div>
                 </div>
@@ -2715,10 +2715,10 @@ function StudentDashboard({ user, sessions, onLogout, onUpdateSession, onSaveRec
                     onChange={e => setTagline(e.target.value)}
                     placeholder="Your tagline..."
                     style={{
-                      background: '#1a1f2e',
-                      border: '1px solid var(--border2)',
+                      background: 'white',
+                      border: '2px solid #4a5568',
                       borderRadius: '6px',
-                      color: 'var(--text)',
+                      color: '#111',
                       padding: '.4rem .8rem',
                       fontSize: '1rem',
                       outline: 'none',
@@ -2739,7 +2739,7 @@ function StudentDashboard({ user, sessions, onLogout, onUpdateSession, onSaveRec
                   style={{
                     fontSize: '1.1rem',
                     fontStyle: 'italic',
-                    color: 'var(--text2)',
+                    color: '#e2e8f0',
                     cursor: 'pointer',
                     display: 'inline-flex',
                     alignItems: 'center',
@@ -2875,7 +2875,7 @@ function ParentDashboard({ user, sessions, onLogout }) {
               marginLeft: '4.5rem',
               fontSize: '1.1rem',
               fontStyle: 'italic',
-              color: 'var(--text2)'
+              color: '#e2e8f0'
             }}>
               {child?.name}'s Progress
             </div>
@@ -2969,11 +2969,11 @@ function TutorSessionsList({ sessions, onSelectSession, onMarkStatus }) {
       >
         <div style={{flex: 1}}>
           <div style={{display: 'flex', gap: '1rem', alignItems: 'center', marginBottom: '.3rem'}}>
-            <span style={{fontSize: '.95rem', fontWeight: 500, color: 'var(--text)'}}>{fmtDate(session.date)}</span>
-            <span style={{fontSize: '.9rem', color: 'var(--text2)'}}>{fmtTime(session.startTime)} - {fmtTime(session.endTime)}</span>
+            <span style={{fontSize: '.95rem', fontWeight: 500, color: '#111'}}>{fmtDate(session.date)}</span>
+            <span style={{fontSize: '.9rem', color: '#e2e8f0'}}>{fmtTime(session.startTime)} - {fmtTime(session.endTime)}</span>
             <span className={statusClass(session.status)}>{session.status}</span>
           </div>
-          <div style={{fontSize: '.9rem', color: 'var(--text2)'}}>
+          <div style={{fontSize: '.9rem', color: '#e2e8f0'}}>
             {student?.name} • {session.instrument} • {session.durationMin} min
           </div>
           {session.plannedSummary && (
@@ -3255,7 +3255,7 @@ function TutorBioPage({ onBack, users }) {
                 fontSize: '1.25rem',
                 fontWeight: '600',
                 marginBottom: '.5rem',
-                color: 'var(--text)'
+                color: '#111'
               }}>
                 {tutor.name}
               </h3>
@@ -3350,7 +3350,7 @@ function TutorDetailView({ tutor, onBack }) {
           {tutor.bio && (
             <p style={{
               fontSize: '1rem',
-              color: 'var(--text2)',
+              color: '#e2e8f0',
               lineHeight: '1.7',
               marginBottom: '1.5rem'
             }}>
@@ -3512,7 +3512,7 @@ function ExportReportModal({ onClose, sessions, users }) {
         <div className="modal-body">
           {/* Date Range */}
           <div style={{marginBottom: '1.5rem'}}>
-            <h3 style={{fontSize: '1rem', fontWeight: 600, marginBottom: '.75rem', color: 'var(--text2)'}}>
+            <h3 style={{fontSize: '1rem', fontWeight: 600, marginBottom: '.75rem', color: '#e2e8f0'}}>
               Date Range
             </h3>
             <div style={{display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem'}}>
@@ -3537,7 +3537,7 @@ function ExportReportModal({ onClose, sessions, users }) {
 
           {/* Status Filter */}
           <div style={{marginBottom: '1.5rem'}}>
-            <h3 style={{fontSize: '1rem', fontWeight: 600, marginBottom: '.75rem', color: 'var(--text2)'}}>
+            <h3 style={{fontSize: '1rem', fontWeight: 600, marginBottom: '.75rem', color: '#e2e8f0'}}>
               Session Status
             </h3>
             <div className="field">
@@ -3553,7 +3553,7 @@ function ExportReportModal({ onClose, sessions, users }) {
 
           {/* Payment Filter */}
           <div style={{marginBottom: '1.5rem'}}>
-            <h3 style={{fontSize: '1rem', fontWeight: 600, marginBottom: '.75rem', color: 'var(--text2)'}}>
+            <h3 style={{fontSize: '1rem', fontWeight: 600, marginBottom: '.75rem', color: '#e2e8f0'}}>
               Payment Status
             </h3>
             <div className="field">
@@ -3571,7 +3571,7 @@ function ExportReportModal({ onClose, sessions, users }) {
 
           {/* Tutor Filter */}
           <div style={{marginBottom: '1.5rem'}}>
-            <h3 style={{fontSize: '1rem', fontWeight: 600, marginBottom: '.75rem', color: 'var(--text2)'}}>
+            <h3 style={{fontSize: '1rem', fontWeight: 600, marginBottom: '.75rem', color: '#e2e8f0'}}>
               Tutor
             </h3>
             <div className="field">
@@ -3592,8 +3592,8 @@ function ExportReportModal({ onClose, sessions, users }) {
             borderRadius: 'var(--radius)',
             marginBottom: '1.5rem'
           }}>
-            <div style={{fontSize: '.9rem', color: 'var(--text2)'}}>
-              Sessions to export: <strong style={{color: 'var(--text)', fontSize: '1.1rem'}}>
+            <div style={{fontSize: '.9rem', color: '#e2e8f0'}}>
+              Sessions to export: <strong style={{color: '#111', fontSize: '1.1rem'}}>
                 {filteredSessions.length}
               </strong>
             </div>
@@ -3689,7 +3689,7 @@ function AddStudentModal({ onClose, onAddStudent }) {
         
         <div className="modal-body">
           <div style={{marginBottom: '1rem'}}>
-            <label style={{display: 'block', marginBottom: '.5rem', color: 'var(--text2)', fontSize: '.9rem', fontWeight: '500'}}>Student Name *</label>
+            <label style={{display: 'block', marginBottom: '.5rem', color: '#e2e8f0', fontSize: '.9rem', fontWeight: '500'}}>Student Name *</label>
             <input 
               type="text" 
               value={studentName}
@@ -3698,10 +3698,10 @@ function AddStudentModal({ onClose, onAddStudent }) {
               autoFocus
               style={{
                 width: '100%',
-                background: '#1a1f2e',
-                border: '1px solid var(--border2)',
+                background: 'white',
+                border: '2px solid #4a5568',
                 borderRadius: '6px',
-                color: 'var(--text)',
+                color: '#111',
                 padding: '.7rem 1rem',
                 fontSize: '.95rem'
               }}
@@ -3710,7 +3710,7 @@ function AddStudentModal({ onClose, onAddStudent }) {
 
           <div style={{display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', marginBottom: '1rem'}}>
             <div>
-              <label style={{display: 'block', marginBottom: '.5rem', color: 'var(--text2)', fontSize: '.9rem', fontWeight: '500'}}>Student Email</label>
+              <label style={{display: 'block', marginBottom: '.5rem', color: '#e2e8f0', fontSize: '.9rem', fontWeight: '500'}}>Student Email</label>
               <input 
                 type="email" 
                 value={studentEmail}
@@ -3718,10 +3718,10 @@ function AddStudentModal({ onClose, onAddStudent }) {
                 placeholder="student@email.com"
                 style={{
                   width: '100%',
-                  background: '#1a1f2e',
-                  border: '1px solid var(--border2)',
+                  background: 'white',
+                  border: '2px solid #4a5568',
                   borderRadius: '6px',
-                  color: 'var(--text)',
+                  color: '#111',
                   padding: '.7rem 1rem',
                   fontSize: '.95rem'
                 }}
@@ -3729,7 +3729,7 @@ function AddStudentModal({ onClose, onAddStudent }) {
             </div>
             
             <div>
-              <label style={{display: 'block', marginBottom: '.5rem', color: 'var(--text2)', fontSize: '.9rem', fontWeight: '500'}}>Student Mobile</label>
+              <label style={{display: 'block', marginBottom: '.5rem', color: '#e2e8f0', fontSize: '.9rem', fontWeight: '500'}}>Student Mobile</label>
               <input 
                 type="tel" 
                 value={studentMobile}
@@ -3737,10 +3737,10 @@ function AddStudentModal({ onClose, onAddStudent }) {
                 placeholder="04XX XXX XXX"
                 style={{
                   width: '100%',
-                  background: '#1a1f2e',
-                  border: '1px solid var(--border2)',
+                  background: 'white',
+                  border: '2px solid #4a5568',
                   borderRadius: '6px',
-                  color: 'var(--text)',
+                  color: '#111',
                   padding: '.7rem 1rem',
                   fontSize: '.95rem'
                 }}
@@ -3750,7 +3750,7 @@ function AddStudentModal({ onClose, onAddStudent }) {
 
           <div style={{display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', marginBottom: '1rem'}}>
             <div>
-              <label style={{display: 'block', marginBottom: '.5rem', color: 'var(--text2)', fontSize: '.9rem', fontWeight: '500'}}>Age</label>
+              <label style={{display: 'block', marginBottom: '.5rem', color: '#e2e8f0', fontSize: '.9rem', fontWeight: '500'}}>Age</label>
               <input 
                 type="text" 
                 value={age}
@@ -3758,10 +3758,10 @@ function AddStudentModal({ onClose, onAddStudent }) {
                 placeholder="e.g. 12 or Adult"
                 style={{
                   width: '100%',
-                  background: '#1a1f2e',
-                  border: '1px solid var(--border2)',
+                  background: 'white',
+                  border: '2px solid #4a5568',
                   borderRadius: '6px',
-                  color: 'var(--text)',
+                  color: '#111',
                   padding: '.7rem 1rem',
                   fontSize: '.95rem'
                 }}
@@ -3769,7 +3769,7 @@ function AddStudentModal({ onClose, onAddStudent }) {
             </div>
             
             <div>
-              <label style={{display: 'block', marginBottom: '.5rem', color: 'var(--text2)', fontSize: '.9rem', fontWeight: '500'}}>Instruments</label>
+              <label style={{display: 'block', marginBottom: '.5rem', color: '#e2e8f0', fontSize: '.9rem', fontWeight: '500'}}>Instruments</label>
               <input 
                 type="text" 
                 value={instruments}
@@ -3777,10 +3777,10 @@ function AddStudentModal({ onClose, onAddStudent }) {
                 placeholder="e.g. Piano, Guitar"
                 style={{
                   width: '100%',
-                  background: '#1a1f2e',
-                  border: '1px solid var(--border2)',
+                  background: 'white',
+                  border: '2px solid #4a5568',
                   borderRadius: '6px',
-                  color: 'var(--text)',
+                  color: '#111',
                   padding: '.7rem 1rem',
                   fontSize: '.95rem'
                 }}
@@ -3789,10 +3789,10 @@ function AddStudentModal({ onClose, onAddStudent }) {
           </div>
 
           <div style={{borderTop: '1px solid var(--border)', paddingTop: '1rem', marginTop: '1rem', marginBottom: '1rem'}}>
-            <h4 style={{marginBottom: '1rem', fontSize: '.95rem', color: 'var(--text2)'}}>Parent/Guardian Details</h4>
+            <h4 style={{marginBottom: '1rem', fontSize: '.95rem', color: '#e2e8f0'}}>Parent/Guardian Details</h4>
             
             <div style={{marginBottom: '1rem'}}>
-              <label style={{display: 'block', marginBottom: '.5rem', color: 'var(--text2)', fontSize: '.9rem', fontWeight: '500'}}>Parent Name</label>
+              <label style={{display: 'block', marginBottom: '.5rem', color: '#e2e8f0', fontSize: '.9rem', fontWeight: '500'}}>Parent Name</label>
               <input 
                 type="text" 
                 value={parentName}
@@ -3800,10 +3800,10 @@ function AddStudentModal({ onClose, onAddStudent }) {
                 placeholder="Parent/guardian full name"
                 style={{
                   width: '100%',
-                  background: '#1a1f2e',
-                  border: '1px solid var(--border2)',
+                  background: 'white',
+                  border: '2px solid #4a5568',
                   borderRadius: '6px',
-                  color: 'var(--text)',
+                  color: '#111',
                   padding: '.7rem 1rem',
                   fontSize: '.95rem'
                 }}
@@ -3812,7 +3812,7 @@ function AddStudentModal({ onClose, onAddStudent }) {
 
             <div style={{display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', marginBottom: '1rem'}}>
               <div>
-                <label style={{display: 'block', marginBottom: '.5rem', color: 'var(--text2)', fontSize: '.9rem', fontWeight: '500'}}>Parent Email</label>
+                <label style={{display: 'block', marginBottom: '.5rem', color: '#e2e8f0', fontSize: '.9rem', fontWeight: '500'}}>Parent Email</label>
                 <input 
                   type="email" 
                   value={parentEmail}
@@ -3820,10 +3820,10 @@ function AddStudentModal({ onClose, onAddStudent }) {
                   placeholder="parent@email.com"
                   style={{
                     width: '100%',
-                    background: '#1a1f2e',
-                    border: '1px solid var(--border2)',
+                    background: 'white',
+                    border: '2px solid #4a5568',
                     borderRadius: '6px',
-                    color: 'var(--text)',
+                    color: '#111',
                     padding: '.7rem 1rem',
                     fontSize: '.95rem'
                   }}
@@ -3831,7 +3831,7 @@ function AddStudentModal({ onClose, onAddStudent }) {
               </div>
               
               <div>
-                <label style={{display: 'block', marginBottom: '.5rem', color: 'var(--text2)', fontSize: '.9rem', fontWeight: '500'}}>Parent Mobile</label>
+                <label style={{display: 'block', marginBottom: '.5rem', color: '#e2e8f0', fontSize: '.9rem', fontWeight: '500'}}>Parent Mobile</label>
                 <input 
                   type="tel" 
                   value={parentMobile}
@@ -3839,10 +3839,10 @@ function AddStudentModal({ onClose, onAddStudent }) {
                   placeholder="04XX XXX XXX"
                   style={{
                     width: '100%',
-                    background: '#1a1f2e',
-                    border: '1px solid var(--border2)',
+                    background: 'white',
+                    border: '2px solid #4a5568',
                     borderRadius: '6px',
-                    color: 'var(--text)',
+                    color: '#111',
                     padding: '.7rem 1rem',
                     fontSize: '.95rem'
                   }}
@@ -3852,7 +3852,7 @@ function AddStudentModal({ onClose, onAddStudent }) {
           </div>
 
           <div style={{marginBottom: '1rem'}}>
-            <label style={{display: 'block', marginBottom: '.5rem', color: 'var(--text2)', fontSize: '.9rem', fontWeight: '500'}}>Address</label>
+            <label style={{display: 'block', marginBottom: '.5rem', color: '#e2e8f0', fontSize: '.9rem', fontWeight: '500'}}>Address</label>
             <input 
               type="text" 
               value={address}
@@ -3860,10 +3860,10 @@ function AddStudentModal({ onClose, onAddStudent }) {
               placeholder="Street address, suburb, postcode"
               style={{
                 width: '100%',
-                background: '#1a1f2e',
-                border: '1px solid var(--border2)',
+                background: 'white',
+                border: '2px solid #4a5568',
                 borderRadius: '6px',
-                color: 'var(--text)',
+                color: '#111',
                 padding: '.7rem 1rem',
                 fontSize: '.95rem'
               }}
@@ -3871,7 +3871,7 @@ function AddStudentModal({ onClose, onAddStudent }) {
           </div>
 
           <div>
-            <label style={{display: 'block', marginBottom: '.5rem', color: 'var(--text2)', fontSize: '.9rem', fontWeight: '500'}}>Notes</label>
+            <label style={{display: 'block', marginBottom: '.5rem', color: '#e2e8f0', fontSize: '.9rem', fontWeight: '500'}}>Notes</label>
             <textarea 
               value={notes}
               onChange={e => setNotes(e.target.value)}
@@ -3879,10 +3879,10 @@ function AddStudentModal({ onClose, onAddStudent }) {
               rows="3"
               style={{
                 width: '100%',
-                background: '#1a1f2e',
-                border: '1px solid var(--border2)',
+                background: 'white',
+                border: '2px solid #4a5568',
                 borderRadius: '6px',
-                color: 'var(--text)',
+                color: '#111',
                 padding: '.7rem 1rem',
                 fontSize: '.95rem',
                 resize: 'vertical'
@@ -4073,7 +4073,7 @@ function AdminDashboard({ user, sessions, onLogout, onUpdateSession, onSaveRecor
           {overdueAssessments.length > 0 && (
             <div style={{
               background: 'var(--bg)',
-              color: 'var(--text)',
+              color: '#111',
               padding: '.75rem 1rem',
               borderRadius: '8px',
               display: 'flex',
