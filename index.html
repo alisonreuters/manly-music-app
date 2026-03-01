@@ -853,7 +853,7 @@ function RecordingPlayer({ recording, onDelete, canDelete }) {
           <button
             onClick={handleDownload}
             style={{
-              background: 'var(--bg3)',
+              background: '#1a1f2e',
               border: '1px solid var(--border2)',
               borderRadius: '4px',
               padding: '0.4rem 0.7rem',
@@ -869,7 +869,7 @@ function RecordingPlayer({ recording, onDelete, canDelete }) {
             <button
               onClick={handleDeleteClick}
               style={{
-                background: 'var(--bg3)',
+                background: '#1a1f2e',
                 border: '1px solid var(--border2)',
                 borderRadius: '4px',
                 padding: '0.4rem 0.7rem',
@@ -915,7 +915,7 @@ function RecordingPlayer({ recording, onDelete, canDelete }) {
           style={{
             flex: 1,
             height: '6px',
-            background: 'var(--bg3)',
+            background: '#1a1f2e',
             borderRadius: '3px',
             cursor: 'pointer',
             position: 'relative'
@@ -2715,7 +2715,7 @@ function StudentDashboard({ user, sessions, onLogout, onUpdateSession, onSaveRec
                     onChange={e => setTagline(e.target.value)}
                     placeholder="Your tagline..."
                     style={{
-                      background: 'var(--bg3)',
+                      background: '#1a1f2e',
                       border: '1px solid var(--border2)',
                       borderRadius: '6px',
                       color: 'var(--text)',
@@ -3681,7 +3681,7 @@ function AddStudentModal({ onClose, onAddStudent }) {
   return (
     <>
       <div className="modal-overlay" onClick={onClose} />
-      <div className="modal-box" style={{maxWidth: '600px'}}>
+      <div className="modal-box" style={{maxWidth: '600px', zIndex: 10001}} onClick={(e) => e.stopPropagation()}>
         <div className="modal-hdr">
           <h3>Add New Student</h3>
           <button className="modal-close" onClick={onClose}>×</button>
@@ -3698,7 +3698,7 @@ function AddStudentModal({ onClose, onAddStudent }) {
               autoFocus
               style={{
                 width: '100%',
-                background: 'var(--bg3)',
+                background: '#1a1f2e',
                 border: '1px solid var(--border2)',
                 borderRadius: '6px',
                 color: 'var(--text)',
@@ -3718,7 +3718,7 @@ function AddStudentModal({ onClose, onAddStudent }) {
                 placeholder="student@email.com"
                 style={{
                   width: '100%',
-                  background: 'var(--bg3)',
+                  background: '#1a1f2e',
                   border: '1px solid var(--border2)',
                   borderRadius: '6px',
                   color: 'var(--text)',
@@ -3737,7 +3737,7 @@ function AddStudentModal({ onClose, onAddStudent }) {
                 placeholder="04XX XXX XXX"
                 style={{
                   width: '100%',
-                  background: 'var(--bg3)',
+                  background: '#1a1f2e',
                   border: '1px solid var(--border2)',
                   borderRadius: '6px',
                   color: 'var(--text)',
@@ -3758,7 +3758,7 @@ function AddStudentModal({ onClose, onAddStudent }) {
                 placeholder="e.g. 12 or Adult"
                 style={{
                   width: '100%',
-                  background: 'var(--bg3)',
+                  background: '#1a1f2e',
                   border: '1px solid var(--border2)',
                   borderRadius: '6px',
                   color: 'var(--text)',
@@ -3777,7 +3777,7 @@ function AddStudentModal({ onClose, onAddStudent }) {
                 placeholder="e.g. Piano, Guitar"
                 style={{
                   width: '100%',
-                  background: 'var(--bg3)',
+                  background: '#1a1f2e',
                   border: '1px solid var(--border2)',
                   borderRadius: '6px',
                   color: 'var(--text)',
@@ -3800,7 +3800,7 @@ function AddStudentModal({ onClose, onAddStudent }) {
                 placeholder="Parent/guardian full name"
                 style={{
                   width: '100%',
-                  background: 'var(--bg3)',
+                  background: '#1a1f2e',
                   border: '1px solid var(--border2)',
                   borderRadius: '6px',
                   color: 'var(--text)',
@@ -3820,7 +3820,7 @@ function AddStudentModal({ onClose, onAddStudent }) {
                   placeholder="parent@email.com"
                   style={{
                     width: '100%',
-                    background: 'var(--bg3)',
+                    background: '#1a1f2e',
                     border: '1px solid var(--border2)',
                     borderRadius: '6px',
                     color: 'var(--text)',
@@ -3839,7 +3839,7 @@ function AddStudentModal({ onClose, onAddStudent }) {
                   placeholder="04XX XXX XXX"
                   style={{
                     width: '100%',
-                    background: 'var(--bg3)',
+                    background: '#1a1f2e',
                     border: '1px solid var(--border2)',
                     borderRadius: '6px',
                     color: 'var(--text)',
@@ -3860,7 +3860,7 @@ function AddStudentModal({ onClose, onAddStudent }) {
               placeholder="Street address, suburb, postcode"
               style={{
                 width: '100%',
-                background: 'var(--bg3)',
+                background: '#1a1f2e',
                 border: '1px solid var(--border2)',
                 borderRadius: '6px',
                 color: 'var(--text)',
@@ -3879,7 +3879,7 @@ function AddStudentModal({ onClose, onAddStudent }) {
               rows="3"
               style={{
                 width: '100%',
-                background: 'var(--bg3)',
+                background: '#1a1f2e',
                 border: '1px solid var(--border2)',
                 borderRadius: '6px',
                 color: 'var(--text)',
