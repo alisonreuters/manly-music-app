@@ -3629,12 +3629,200 @@ function ExportReportModal({ onClose, sessions, users }) {
 /* ══════════════════════════════════════════════════
    ADMIN DASHBOARD
 ══════════════════════════════════════════════════ */
+// ═══════════════════════════════════════════════════════════
+// ADD STUDENT MODAL
+// ═══════════════════════════════════════════════════════════
+function AddStudentModal({ onClose, onAddStudent }) {
+  const [studentName, setStudentName] = useState('');
+  const [studentEmail, setStudentEmail] = useState('');
+  const [studentMobile, setStudentMobile] = useState('');
+  const [parentName, setParentName] = useState('');
+  const [parentEmail, setParentEmail] = useState('');
+  const [parentMobile, setParentMobile] = useState('');
+  const [address, setAddress] = useState('');
+  const [age, setAge] = useState('');
+  const [instruments, setInstruments] = useState('');
+  const [notes, setNotes] = useState('');
+  const [saving, setSaving] = useState(false);
+
+  async function handleSubmit() {
+    if (!studentName.trim()) {
+      alert('Student name is required');
+      return;
+    }
+
+    setSaving(true);
+    
+    try {
+      const newStudent = {
+        name: studentName.trim(),
+        email: studentEmail.trim() || null,
+        mobile: studentMobile.trim() || null,
+        role: 'student',
+        parent_name: parentName.trim() || null,
+        parent_email: parentEmail.trim() || null,
+        parent_mobile: parentMobile.trim() || null,
+        address: address.trim() || null,
+        age: age.trim() || null,
+        instruments_learning: instruments.trim() || null,
+        notes: notes.trim() || null,
+        password: 'temp_' + Math.random().toString(36).slice(2)
+      };
+
+      await onAddStudent(newStudent);
+      onClose();
+    } catch (error) {
+      alert('Failed to add student: ' + error.message);
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  return (
+    <>
+      <div className="modal-overlay" onClick={onClose} />
+      <div className="modal-box" style={{maxWidth: '600px'}}>
+        <div className="modal-hdr">
+          <h3>Add New Student</h3>
+          <button className="modal-close" onClick={onClose}>×</button>
+        </div>
+        
+        <div className="modal-body">
+          <div className="field">
+            <label>Student Name *</label>
+            <input 
+              type="text" 
+              value={studentName}
+              onChange={e => setStudentName(e.target.value)}
+              placeholder="Full name"
+              autoFocus
+            />
+          </div>
+
+          <div style={{display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem'}}>
+            <div className="field">
+              <label>Student Email</label>
+              <input 
+                type="email" 
+                value={studentEmail}
+                onChange={e => setStudentEmail(e.target.value)}
+                placeholder="student@email.com"
+              />
+            </div>
+            
+            <div className="field">
+              <label>Student Mobile</label>
+              <input 
+                type="tel" 
+                value={studentMobile}
+                onChange={e => setStudentMobile(e.target.value)}
+                placeholder="04XX XXX XXX"
+              />
+            </div>
+          </div>
+
+          <div style={{display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem'}}>
+            <div className="field">
+              <label>Age</label>
+              <input 
+                type="text" 
+                value={age}
+                onChange={e => setAge(e.target.value)}
+                placeholder="e.g. 12 or Adult"
+              />
+            </div>
+            
+            <div className="field">
+              <label>Instruments</label>
+              <input 
+                type="text" 
+                value={instruments}
+                onChange={e => setInstruments(e.target.value)}
+                placeholder="e.g. Piano, Guitar"
+              />
+            </div>
+          </div>
+
+          <div style={{borderTop: '1px solid var(--border)', paddingTop: '1rem', marginTop: '1rem'}}>
+            <h4 style={{marginBottom: '1rem', fontSize: '.95rem', color: 'var(--text2)'}}>Parent/Guardian Details</h4>
+            
+            <div className="field">
+              <label>Parent Name</label>
+              <input 
+                type="text" 
+                value={parentName}
+                onChange={e => setParentName(e.target.value)}
+                placeholder="Parent/guardian full name"
+              />
+            </div>
+
+            <div style={{display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem'}}>
+              <div className="field">
+                <label>Parent Email</label>
+                <input 
+                  type="email" 
+                  value={parentEmail}
+                  onChange={e => setParentEmail(e.target.value)}
+                  placeholder="parent@email.com"
+                />
+              </div>
+              
+              <div className="field">
+                <label>Parent Mobile</label>
+                <input 
+                  type="tel" 
+                  value={parentMobile}
+                  onChange={e => setParentMobile(e.target.value)}
+                  placeholder="04XX XXX XXX"
+                />
+              </div>
+            </div>
+          </div>
+
+          <div className="field">
+            <label>Address</label>
+            <input 
+              type="text" 
+              value={address}
+              onChange={e => setAddress(e.target.value)}
+              placeholder="Street address, suburb, postcode"
+            />
+          </div>
+
+          <div className="field">
+            <label>Notes</label>
+            <textarea 
+              value={notes}
+              onChange={e => setNotes(e.target.value)}
+              placeholder="Any additional information..."
+              rows="3"
+            />
+          </div>
+        </div>
+
+        <div className="modal-footer">
+          <button className="btn btn-secondary" onClick={onClose} disabled={saving}>
+            Cancel
+          </button>
+          <button className="btn btn-primary" onClick={handleSubmit} disabled={saving}>
+            {saving ? 'Adding...' : 'Add Student'}
+          </button>
+        </div>
+      </div>
+    </>
+  );
+}
+
+// ═══════════════════════════════════════════════════════════
+// ADMIN DASHBOARD
+// ═══════════════════════════════════════════════════════════
 function AdminDashboard({ user, sessions, onLogout, onUpdateSession, onSaveRecording, onMarkStatus, onAddSession, onTogglePay, onSendBroadcast, onSendReminder }) {
   const [activeSession, setActiveSession] = useState(null);
   const [showSchedule,  setShowSchedule]  = useState(false);
   const [showBroadcast, setShowBroadcast] = useState(false);
   const [showBroadcastEmail, setShowBroadcastEmail] = useState(false);
   const [showExportReport, setShowExportReport] = useState(false);
+  const [showAddStudentModal, setShowAddStudentModal] = useState(false);
   const [filterStudent, setFilterStudent] = useState('all');
   const [view, setView]                   = useState('calendar'); // 'calendar' | 'list'
   const [searchQuery, setSearchQuery]     = useState('');
@@ -3726,8 +3914,18 @@ function AdminDashboard({ user, sessions, onLogout, onUpdateSession, onSaveRecor
 
         {/* toolbar */}
         <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:'1rem',flexWrap:'wrap',gap:'.75rem'}}>
-          <div style={{display:'flex',gap:'.75rem',flexWrap:'wrap',alignItems:'center',flex:1}}>
-            {/* Search Field */}
+          
+          {/* Left: Add New Student Button */}
+          <button 
+            className="btn btn-green btn-sm"
+            onClick={() => setShowAddStudentModal(true)}
+            style={{whiteSpace:'nowrap'}}
+          >
+            + Add New
+          </button>
+
+          {/* Right: Search Field */}
+          <div style={{display:'flex',gap:'.75rem',flexWrap:'wrap',alignItems:'center',flex:1,justifyContent:'flex-end'}}>
             <input 
               type="text" 
               placeholder="🔍 Search students (name or surname)..." 
@@ -3877,6 +4075,24 @@ function AdminDashboard({ user, sessions, onLogout, onUpdateSession, onSaveRecor
           onClose={()=>setShowExportReport(false)}
           sessions={sessions}
           users={USERS}
+        />
+      )}
+      
+      {showAddStudentModal && (
+        <AddStudentModal
+          onClose={() => setShowAddStudentModal(false)}
+          onAddStudent={async (newStudent) => {
+            // Add student to Supabase
+            const { data, error } = await supabase
+              .from('users')
+              .insert([newStudent])
+              .select();
+            
+            if (error) throw error;
+            
+            // Reload users
+            window.location.reload();
+          }}
         />
       )}
     </div>
