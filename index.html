@@ -1450,7 +1450,12 @@ function SessionPanel({ session, userRole, currentUserId, onClose, onSaveRecordi
               
               {/* Quick Status Buttons */}
               <div style={{marginBottom: '1rem'}}>
-                <div style={{fontSize: '.85rem', color: 'var(--text3)', marginBottom: '.5rem'}}>Set Payment Status:</div>
+                <div style={{fontSize: '.85rem', color: 'var(--text3)', marginBottom: '.5rem'}}>
+                  Set Payment Status:
+                  {session.payment_status && (
+                    <span style={{marginLeft: '.5rem', color: 'var(--green)', fontSize: '.75rem'}}>✓ Saved</span>
+                  )}
+                </div>
                 <div style={{display:'flex',gap:'.5rem',flexWrap:'wrap'}}>
                   {[
                     ['paid', '✅ Paid', '#22c55e'],
@@ -1495,12 +1500,19 @@ function SessionPanel({ session, userRole, currentUserId, onClose, onSaveRecordi
 
               {/* Payment Code Input */}
               <div style={{marginBottom: '1rem'}}>
-                <div style={{fontSize: '.85rem', color: 'var(--text3)', marginBottom: '.5rem'}}>Payment Code:</div>
+                <div style={{fontSize: '.85rem', color: 'var(--text3)', marginBottom: '.5rem'}}>
+                  Payment Code: 
+                  {session.payment_code && (
+                    <span style={{marginLeft: '.5rem', color: 'var(--green)', fontSize: '.75rem'}}>✓ Saved</span>
+                  )}
+                </div>
                 <input 
                   type="text"
-                  placeholder="e.g. C, F, S, G..."
+                  placeholder=""
                   value={session.payment_code || ''}
-                  onChange={e => onUpdateSession(session.id, { payment_code: e.target.value })}
+                  onChange={e => {
+                    onUpdateSession(session.id, { payment_code: e.target.value });
+                  }}
                   style={{
                     width: '100%',
                     background: 'var(--bg1)',
@@ -3654,10 +3666,32 @@ function AdminDashboard({ user, sessions, onLogout, onUpdateSession, onSaveRecor
     return true;
   });
 
+  // Calculate stats
+  const today = new Date();
+  const thisMonth = sessions.filter(s => {
+    const sessionDate = new Date(s.date);
+    return sessionDate.getMonth() === today.getMonth() && 
+           sessionDate.getFullYear() === today.getFullYear();
+  });
+  
   const attended = sessions.filter(s=>s.status==='attended').length;
   const missed   = sessions.filter(s=>s.status==='missed').length;
-  const revenue  = sessions.filter(s=>s.paymentReceived).length;
-  const unpaid   = sessions.filter(s=>s.status==='attended'&&!s.payrollTutorPaid).length;
+  const total = attended + missed;
+  const attendanceRate = total > 0 ? Math.round(attended/total*100) : 0;
+  
+  // NEW: Payment-focused stats
+  const unpaidSessions = sessions.filter(s => 
+    s.payment_status === 'invoice' || s.payment_status === 'overdue'
+  ).length;
+  
+  const paidThisMonth = thisMonth.filter(s => s.payment_status === 'paid').length;
+  
+  // Upcoming this week
+  const oneWeekFromNow = new Date(today.getTime() + 7 * 24 * 60 * 60 * 1000);
+  const upcomingWeek = sessions.filter(s => {
+    const sessionDate = new Date(s.date);
+    return s.status === 'scheduled' && sessionDate >= today && sessionDate <= oneWeekFromNow;
+  }).length;
   
   // Calculate overdue assessments (attended sessions without assessments, >2 hours old)
   const now = new Date();
@@ -3677,11 +3711,11 @@ function AdminDashboard({ user, sessions, onLogout, onUpdateSession, onSaveRecor
       <div className="dashboard">
         <div className="stats-grid">
           {[
-            ['Total Sessions',sessions.length,null],
-            ['Attended',attended,'var(--green)'],
-            ['Missed',missed,missed>0?'var(--red)':null],
-            ['Payments Received',revenue,null],
-            ['Tutor Pay Pending',unpaid,unpaid>0?'var(--amber)':null]
+            ['Sessions This Month', thisMonth.length, null],
+            ['Attendance Rate', attendanceRate + '%', attendanceRate >= 80 ? 'var(--green)' : attendanceRate >= 60 ? 'var(--amber)' : 'var(--red)'],
+            ['💰 Unpaid Sessions', unpaidSessions, unpaidSessions > 0 ? 'var(--amber)' : 'var(--green)'],
+            ['⭐ Pending Assessments', overdueAssessments.length, overdueAssessments.length > 0 ? 'var(--red)' : 'var(--green)'],
+            ['📅 Upcoming This Week', upcomingWeek, null]
           ].map(([l,v,c])=>(
             <div key={l} className="stat-card">
               <div className="stat-val" style={c?{color:c}:{}}>{v}</div>
