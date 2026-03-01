@@ -3688,114 +3688,205 @@ function AddStudentModal({ onClose, onAddStudent }) {
         </div>
         
         <div className="modal-body">
-          <div className="field">
-            <label>Student Name *</label>
+          <div style={{marginBottom: '1rem'}}>
+            <label style={{display: 'block', marginBottom: '.5rem', color: 'var(--text2)', fontSize: '.9rem', fontWeight: '500'}}>Student Name *</label>
             <input 
               type="text" 
               value={studentName}
               onChange={e => setStudentName(e.target.value)}
               placeholder="Full name"
               autoFocus
+              style={{
+                width: '100%',
+                background: 'var(--bg3)',
+                border: '1px solid var(--border2)',
+                borderRadius: '6px',
+                color: 'var(--text)',
+                padding: '.7rem 1rem',
+                fontSize: '.95rem'
+              }}
             />
           </div>
 
-          <div style={{display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem'}}>
-            <div className="field">
-              <label>Student Email</label>
+          <div style={{display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', marginBottom: '1rem'}}>
+            <div>
+              <label style={{display: 'block', marginBottom: '.5rem', color: 'var(--text2)', fontSize: '.9rem', fontWeight: '500'}}>Student Email</label>
               <input 
                 type="email" 
                 value={studentEmail}
                 onChange={e => setStudentEmail(e.target.value)}
                 placeholder="student@email.com"
+                style={{
+                  width: '100%',
+                  background: 'var(--bg3)',
+                  border: '1px solid var(--border2)',
+                  borderRadius: '6px',
+                  color: 'var(--text)',
+                  padding: '.7rem 1rem',
+                  fontSize: '.95rem'
+                }}
               />
             </div>
             
-            <div className="field">
-              <label>Student Mobile</label>
+            <div>
+              <label style={{display: 'block', marginBottom: '.5rem', color: 'var(--text2)', fontSize: '.9rem', fontWeight: '500'}}>Student Mobile</label>
               <input 
                 type="tel" 
                 value={studentMobile}
                 onChange={e => setStudentMobile(e.target.value)}
                 placeholder="04XX XXX XXX"
+                style={{
+                  width: '100%',
+                  background: 'var(--bg3)',
+                  border: '1px solid var(--border2)',
+                  borderRadius: '6px',
+                  color: 'var(--text)',
+                  padding: '.7rem 1rem',
+                  fontSize: '.95rem'
+                }}
               />
             </div>
           </div>
 
-          <div style={{display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem'}}>
-            <div className="field">
-              <label>Age</label>
+          <div style={{display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', marginBottom: '1rem'}}>
+            <div>
+              <label style={{display: 'block', marginBottom: '.5rem', color: 'var(--text2)', fontSize: '.9rem', fontWeight: '500'}}>Age</label>
               <input 
                 type="text" 
                 value={age}
                 onChange={e => setAge(e.target.value)}
                 placeholder="e.g. 12 or Adult"
+                style={{
+                  width: '100%',
+                  background: 'var(--bg3)',
+                  border: '1px solid var(--border2)',
+                  borderRadius: '6px',
+                  color: 'var(--text)',
+                  padding: '.7rem 1rem',
+                  fontSize: '.95rem'
+                }}
               />
             </div>
             
-            <div className="field">
-              <label>Instruments</label>
+            <div>
+              <label style={{display: 'block', marginBottom: '.5rem', color: 'var(--text2)', fontSize: '.9rem', fontWeight: '500'}}>Instruments</label>
               <input 
                 type="text" 
                 value={instruments}
                 onChange={e => setInstruments(e.target.value)}
                 placeholder="e.g. Piano, Guitar"
+                style={{
+                  width: '100%',
+                  background: 'var(--bg3)',
+                  border: '1px solid var(--border2)',
+                  borderRadius: '6px',
+                  color: 'var(--text)',
+                  padding: '.7rem 1rem',
+                  fontSize: '.95rem'
+                }}
               />
             </div>
           </div>
 
-          <div style={{borderTop: '1px solid var(--border)', paddingTop: '1rem', marginTop: '1rem'}}>
+          <div style={{borderTop: '1px solid var(--border)', paddingTop: '1rem', marginTop: '1rem', marginBottom: '1rem'}}>
             <h4 style={{marginBottom: '1rem', fontSize: '.95rem', color: 'var(--text2)'}}>Parent/Guardian Details</h4>
             
-            <div className="field">
-              <label>Parent Name</label>
+            <div style={{marginBottom: '1rem'}}>
+              <label style={{display: 'block', marginBottom: '.5rem', color: 'var(--text2)', fontSize: '.9rem', fontWeight: '500'}}>Parent Name</label>
               <input 
                 type="text" 
                 value={parentName}
                 onChange={e => setParentName(e.target.value)}
                 placeholder="Parent/guardian full name"
+                style={{
+                  width: '100%',
+                  background: 'var(--bg3)',
+                  border: '1px solid var(--border2)',
+                  borderRadius: '6px',
+                  color: 'var(--text)',
+                  padding: '.7rem 1rem',
+                  fontSize: '.95rem'
+                }}
               />
             </div>
 
-            <div style={{display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem'}}>
-              <div className="field">
-                <label>Parent Email</label>
+            <div style={{display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', marginBottom: '1rem'}}>
+              <div>
+                <label style={{display: 'block', marginBottom: '.5rem', color: 'var(--text2)', fontSize: '.9rem', fontWeight: '500'}}>Parent Email</label>
                 <input 
                   type="email" 
                   value={parentEmail}
                   onChange={e => setParentEmail(e.target.value)}
                   placeholder="parent@email.com"
+                  style={{
+                    width: '100%',
+                    background: 'var(--bg3)',
+                    border: '1px solid var(--border2)',
+                    borderRadius: '6px',
+                    color: 'var(--text)',
+                    padding: '.7rem 1rem',
+                    fontSize: '.95rem'
+                  }}
                 />
               </div>
               
-              <div className="field">
-                <label>Parent Mobile</label>
+              <div>
+                <label style={{display: 'block', marginBottom: '.5rem', color: 'var(--text2)', fontSize: '.9rem', fontWeight: '500'}}>Parent Mobile</label>
                 <input 
                   type="tel" 
                   value={parentMobile}
                   onChange={e => setParentMobile(e.target.value)}
                   placeholder="04XX XXX XXX"
+                  style={{
+                    width: '100%',
+                    background: 'var(--bg3)',
+                    border: '1px solid var(--border2)',
+                    borderRadius: '6px',
+                    color: 'var(--text)',
+                    padding: '.7rem 1rem',
+                    fontSize: '.95rem'
+                  }}
                 />
               </div>
             </div>
           </div>
 
-          <div className="field">
-            <label>Address</label>
+          <div style={{marginBottom: '1rem'}}>
+            <label style={{display: 'block', marginBottom: '.5rem', color: 'var(--text2)', fontSize: '.9rem', fontWeight: '500'}}>Address</label>
             <input 
               type="text" 
               value={address}
               onChange={e => setAddress(e.target.value)}
               placeholder="Street address, suburb, postcode"
+              style={{
+                width: '100%',
+                background: 'var(--bg3)',
+                border: '1px solid var(--border2)',
+                borderRadius: '6px',
+                color: 'var(--text)',
+                padding: '.7rem 1rem',
+                fontSize: '.95rem'
+              }}
             />
           </div>
 
-          <div className="field">
-            <label>Notes</label>
+          <div>
+            <label style={{display: 'block', marginBottom: '.5rem', color: 'var(--text2)', fontSize: '.9rem', fontWeight: '500'}}>Notes</label>
             <textarea 
               value={notes}
               onChange={e => setNotes(e.target.value)}
               placeholder="Any additional information..."
               rows="3"
+              style={{
+                width: '100%',
+                background: 'var(--bg3)',
+                border: '1px solid var(--border2)',
+                borderRadius: '6px',
+                color: 'var(--text)',
+                padding: '.7rem 1rem',
+                fontSize: '.95rem',
+                resize: 'vertical'
+              }}
             />
           </div>
         </div>
