@@ -3659,13 +3659,6 @@ function AddStudentModal({ onClose, onAddStudent }) {
         email: studentEmail.trim() || null,
         mobile: studentMobile.trim() || null,
         role: 'student',
-        parent_name: parentName.trim() || null,
-        parent_email: parentEmail.trim() || null,
-        parent_mobile: parentMobile.trim() || null,
-        address: address.trim() || null,
-        age: age.trim() || null,
-        instruments_learning: instruments.trim() || null,
-        notes: notes.trim() || null,
         password: 'temp_' + Math.random().toString(36).slice(2)
       };
 
