@@ -196,8 +196,8 @@ input[type="time"]::-webkit-calendar-picker-indicator {
 
 /* student filter */
 .cal-filter { display:flex; gap:.4rem; flex-wrap:wrap; margin-bottom:1rem; }
-.filter-btn { background:transparent; border:1px solid var(--border); color:var(--text3); padding:.3rem .8rem; border-radius:20px; font-size:.78rem; cursor:pointer; transition:all .2s; }
-.filter-btn.active, .filter-btn:hover { background:rgba(107,140,255,.12); border-color:var(--accent); color:var(--accent); }
+.filter-btn { background:transparent; border:2px solid #4a5568; color:#cbd5e1; padding:.3rem .8rem; border-radius:20px; font-size:.78rem; cursor:pointer; transition:all .2s; font-weight:500; }
+.filter-btn.active, .filter-btn:hover { background:rgba(107,140,255,.25); border-color:#6b8cff; color:#e2e8f0; font-weight:600; }
 
 /* grid */
 .cal-grid { display:grid; grid-template-columns:repeat(7,1fr); gap:3px; }
@@ -2711,11 +2711,12 @@ function AppHeader({ title, sub, onLogout, onRefresh }) {
         position: 'absolute',
         bottom: '5px',
         right: '20px',
-        fontSize: '.7rem',
-        color: 'var(--text3)',
-        opacity: 0.5
+        fontSize: '.75rem',
+        color: '#94a3b8',
+        opacity: 0.8,
+        fontWeight: 500
       }}>
-        {APP_VERSION}
+        v9.0 - Mar 2026
       </div>
     </div>
   );
@@ -4137,17 +4138,18 @@ function AdminDashboard({ user, sessions, onLogout, onUpdateSession, onSaveRecor
           {/* Overdue Assessments Alert */}
           {overdueAssessments.length > 0 && (
             <div style={{
-              background: 'var(--bg)',
-              color: '#111',
-              padding: '.75rem 1rem',
-              borderRadius: '8px',
+              background: '#0a0e1a',
+              color: 'white',
+              padding: '.6rem 1rem',
+              borderRadius: '6px',
               display: 'flex',
               alignItems: 'center',
               gap: '.75rem',
-              fontWeight: 600,
-              fontSize: '.9rem',
-              border: '2px solid #ff4444',
-              cursor: 'pointer'
+              fontWeight: 500,
+              fontSize: '.88rem',
+              border: '1px solid #ff4444',
+              cursor: 'pointer',
+              marginBottom: '1rem'
             }}
             onClick={() => {
               const msg = overdueAssessments.map(s => {
@@ -4159,9 +4161,9 @@ function AdminDashboard({ user, sessions, onLogout, onUpdateSession, onSaveRecor
             }}
             title="Click to see details"
             >
-              <span style={{fontSize: '1.2rem'}}>🚨</span>
+              <span style={{fontSize: '1rem', color: '#ff4444'}}>⚠️</span>
               <span>{overdueAssessments.length} Assessment{overdueAssessments.length !== 1 ? 's' : ''} Overdue</span>
-              <span style={{fontSize: '.8rem', opacity: 0.9}}>(Click for details)</span>
+              <span style={{fontSize: '.75rem', opacity: 0.7, marginLeft: 'auto'}}>Click for details</span>
             </div>
           )}
           
