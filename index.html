@@ -379,6 +379,31 @@ input[type="time"]::-webkit-calendar-picker-indicator {
 <script type="text/babel">
 const { useState, useEffect, useRef, useCallback } = React;
 
+// ══════════════════════════════════════════════════════════
+// APP VERSION & CACHE MANAGEMENT
+// ══════════════════════════════════════════════════════════
+const APP_VERSION = 'v8.0 - March 2026';
+
+// Cache management functions
+function clearAllCaches() {
+  return new Promise((resolve) => {
+    if ('caches' in window) {
+      caches.keys().then(names => {
+        Promise.all(names.map(name => caches.delete(name)))
+          .then(() => resolve(true));
+      });
+    } else {
+      resolve(true);
+    }
+  });
+}
+
+function hardReload() {
+  clearAllCaches().then(() => {
+    window.location.reload(true);
+  });
+}
+
 /* ══════════════════════════════════════════════════
    SUPABASE CONNECTION
 ══════════════════════════════════════════════════ */
@@ -2647,7 +2672,15 @@ function LoginScreen({ onLogin, userType, onBack, users }) {
 /* ══════════════════════════════════════════════════
    SHARED APP HEADER
 ══════════════════════════════════════════════════ */
-function AppHeader({ title, sub, onLogout }) {
+function AppHeader({ title, sub, onLogout, onRefresh }) {
+  const [refreshing, setRefreshing] = useState(false);
+  
+  async function handleRefresh() {
+    setRefreshing(true);
+    if (onRefresh) await onRefresh();
+    setTimeout(() => setRefreshing(false), 1000);
+  }
+  
   return (
     <div className="app-header">
       <div className="app-header-inner">
@@ -2655,7 +2688,34 @@ function AppHeader({ title, sub, onLogout }) {
           <MMLogo small wordmark={false}/>
           <div><h2>{title}</h2>{sub&&<p>{sub}</p>}</div>
         </div>
-        <button className="btn" onClick={onLogout}>Logout</button>
+        <div style={{display:'flex',gap:'.5rem',alignItems:'center'}}>
+          <button 
+            className="btn btn-sm btn-secondary" 
+            onClick={handleRefresh}
+            disabled={refreshing}
+            title="Refresh data from database"
+          >
+            {refreshing ? '🔄 Refreshing...' : '🔄 Refresh'}
+          </button>
+          <button 
+            className="btn btn-sm btn-amber" 
+            onClick={hardReload}
+            title="Clear cache and reload (use if data seems stuck)"
+          >
+            💾 Clear Cache
+          </button>
+          <button className="btn btn-sm" onClick={onLogout}>Logout</button>
+        </div>
+      </div>
+      <div style={{
+        position: 'absolute',
+        bottom: '5px',
+        right: '20px',
+        fontSize: '.7rem',
+        color: 'var(--text3)',
+        opacity: 0.5
+      }}>
+        {APP_VERSION}
       </div>
     </div>
   );
@@ -3912,7 +3972,7 @@ function AddStudentModal({ onClose, onAddStudent }) {
 // ═══════════════════════════════════════════════════════════
 // ADMIN DASHBOARD
 // ═══════════════════════════════════════════════════════════
-function AdminDashboard({ user, sessions, onLogout, onUpdateSession, onSaveRecording, onMarkStatus, onAddSession, onTogglePay, onSendBroadcast, onSendReminder }) {
+function AdminDashboard({ user, sessions, onLogout, onUpdateSession, onSaveRecording, onMarkStatus, onAddSession, onTogglePay, onSendBroadcast, onSendReminder, onRefreshData }) {
   const [activeSession, setActiveSession] = useState(null);
   const [showSchedule,  setShowSchedule]  = useState(false);
   const [showBroadcast, setShowBroadcast] = useState(false);
@@ -3991,7 +4051,7 @@ function AdminDashboard({ user, sessions, onLogout, onUpdateSession, onSaveRecor
 
   return (
     <div>
-      <AppHeader title="Admin Dashboard" sub={`Welcome, ${user.name}`} onLogout={onLogout}/>
+      <AppHeader title="Admin Dashboard" sub={`Welcome, ${user.name}`} onLogout={onLogout} onRefresh={onRefreshData}/>
       <div className="dashboard">
         <div className="stats-grid">
           {[
@@ -4372,6 +4432,55 @@ function App() {
     loadData();
   }, []);
 
+  // Refresh data function
+  async function refreshData() {
+    try {
+      const { data: usersData } = await supabase.from('users').select('*');
+      const { data: sessionsData } = await supabase.from('sessions').select('*');
+      
+      if (usersData) {
+        setUsers(usersData);
+        USERS = usersData;
+      }
+      
+      if (sessionsData) {
+        const transformedSessions = sessionsData.map(s => ({
+          id: s.id,
+          studentId: s.student_id,
+          tutorId: s.tutor_id,
+          date: s.date,
+          startTime: s.start_time,
+          endTime: s.end_time,
+          durationMin: s.duration_min,
+          instrument: s.instrument,
+          accompaniment: s.accompaniment || '',
+          status: s.status,
+          plannedSummary: s.planned_summary || '',
+          tutorComments: s.tutor_comments || '',
+          studentComments: s.student_comments || '',
+          recordings: [],
+          payrollTutorPaid: s.payroll_tutor_paid,
+          paymentReceived: s.payment_received,
+          invoiced: s.invoiced,
+          ratingTechnique: s.rating_technique,
+          ratingRhythm: s.rating_rhythm,
+          ratingTone: s.rating_tone,
+          ratingSightReading: s.rating_sight_reading,
+          ratingExpression: s.rating_expression,
+          ratingFocus: s.rating_focus,
+          assessmentNotes: s.assessment_notes || '',
+          payment_status: s.payment_status,
+          payment_code: s.payment_code,
+          authorized_by: s.authorized_by,
+          authorization_reason: s.authorization_reason,
+        }));
+        setSessions(transformedSessions);
+      }
+    } catch (error) {
+      console.error('Error refreshing data:', error);
+    }
+  }
+
   async function updateSession(id, patch) {
     setSessions(prev => prev.map(s => s.id===id ? {...s,...patch} : s));
     
@@ -4673,7 +4782,7 @@ function App() {
   if (role==='student') return <StudentDashboard user={currentUser} {...sharedProps}/>;
   if (role==='parent') return <ParentDashboard user={currentUser} sessions={sessions} onLogout={logout}/>;
   if (role==='tutor') return <TutorDashboard user={currentUser} {...sharedProps}/>;
-  if (role==='admin') return <AdminDashboard user={currentUser} {...sharedProps} onTogglePay={togglePay} onSendBroadcast={sendBroadcast}/>;
+  if (role==='admin') return <AdminDashboard user={currentUser} {...sharedProps} onTogglePay={togglePay} onSendBroadcast={sendBroadcast} onRefreshData={refreshData}/>;
 
   return null;
 }
