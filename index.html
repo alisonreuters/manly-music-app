@@ -404,6 +404,91 @@ function hardReload() {
   });
 }
 
+// Backup/Export functions
+window.downloadBackup = async function() {
+  try {
+    const confirmed = confirm(
+      '📥 DOWNLOAD DATABASE BACKUP\n\n' +
+      'This will download:\n' +
+      '• All users (students, tutors, parents)\n' +
+      '• All sessions (past and future)\n' +
+      '• Payment records\n' +
+      '• Assessment data\n\n' +
+      'Save these files to Dropbox/Google Drive for safekeeping!\n\n' +
+      'Continue?'
+    );
+    
+    if (!confirmed) return;
+    
+    // Fetch all data from Supabase
+    const { data: users } = await supabase.from('users').select('*');
+    const { data: sessions } = await supabase.from('sessions').select('*');
+    
+    // Convert to CSV
+    function toCSV(data, headers) {
+      if (!data || data.length === 0) return '';
+      const rows = data.map(row => 
+        headers.map(h => {
+          const val = row[h];
+          if (val === null || val === undefined) return '';
+          const str = String(val).replace(/"/g, '""');
+          return `"${str}"`;
+        }).join(',')
+      );
+      return [headers.join(','), ...rows].join('\n');
+    }
+    
+    // Users CSV
+    const userHeaders = ['id', 'name', 'email', 'mobile', 'role', 'parent_name', 'parent_email', 'parent_mobile'];
+    const usersCSV = toCSV(users, userHeaders);
+    
+    // Sessions CSV
+    const sessionHeaders = [
+      'id', 'student_id', 'tutor_id', 'date', 'start_time', 'end_time', 
+      'duration_min', 'instrument', 'status', 'payment_status', 'payment_code',
+      'tutor_comments', 'student_comments', 'planned_summary',
+      'rating_technique', 'rating_rhythm', 'rating_tone', 'rating_sight_reading',
+      'rating_expression', 'rating_focus', 'assessment_notes'
+    ];
+    const sessionsCSV = toCSV(sessions, sessionHeaders);
+    
+    // Download files
+    function downloadCSV(content, filename) {
+      const blob = new Blob([content], { type: 'text/csv' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    }
+    
+    const timestamp = new Date().toISOString().split('T')[0];
+    downloadCSV(usersCSV, `manly-music-users-${timestamp}.csv`);
+    
+    setTimeout(() => {
+      downloadCSV(sessionsCSV, `manly-music-sessions-${timestamp}.csv`);
+    }, 500);
+    
+    setTimeout(() => {
+      alert(
+        '✅ BACKUP COMPLETE!\n\n' +
+        'Downloaded 2 files:\n' +
+        `• manly-music-users-${timestamp}.csv\n` +
+        `• manly-music-sessions-${timestamp}.csv\n\n` +
+        'Save these to Dropbox/Google Drive!\n\n' +
+        'Recommend: Weekly backups every Monday'
+      );
+    }, 1000);
+    
+  } catch (error) {
+    console.error('Backup error:', error);
+    alert('❌ Backup failed: ' + error.message);
+  }
+};
+
 /* ══════════════════════════════════════════════════
    SUPABASE CONNECTION
 ══════════════════════════════════════════════════ */
@@ -2771,6 +2856,19 @@ function AppHeader({ title, sub, onLogout, onRefresh }) {
             {refreshing ? '🔄 Refreshing...' : '🔄 Refresh'}
           </button>
           <button 
+            className="btn btn-sm btn-green" 
+            onClick={() => {
+              if (window.downloadBackup) {
+                window.downloadBackup();
+              } else {
+                alert('Backup function not available');
+              }
+            }}
+            title="Download full database backup (CSV files)"
+          >
+            📥 Backup
+          </button>
+          <button 
             className="btn btn-sm btn-amber" 
             onClick={hardReload}
             title="Clear cache and reload (use if data seems stuck)"
@@ -2789,7 +2887,7 @@ function AppHeader({ title, sub, onLogout, onRefresh }) {
         opacity: 0.8,
         fontWeight: 500
       }}>
-        v9.0 - Mar 2026
+        v11.0 - Mar 2026
       </div>
     </div>
   );
