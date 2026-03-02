@@ -1595,6 +1595,79 @@ function SessionPanel({ session, userRole, currentUserId, onClose, onSaveRecordi
                 </>
               )}
 
+              {/* Send Invoice Button */}
+              {(!session.payment_status || session.payment_status === 'invoice' || session.payment_status === 'overdue') && (
+                <div style={{marginTop: '1rem'}}>
+                  <button
+                    className="btn btn-primary btn-sm"
+                    onClick={async () => {
+                      const student = USERS.find(u => u.id === session.studentId);
+                      const tutor = USERS.find(u => u.id === session.tutorId);
+                      
+                      if (!student?.email && !student?.parent_email) {
+                        alert('Cannot send invoice: No email on file for student or parent');
+                        return;
+                      }
+                      
+                      const customerEmail = student.parent_email || student.email;
+                      const customerName = student.parent_name || student.name;
+                      
+                      const confirmed = confirm(
+                        `Send Stripe invoice to:\n\n` +
+                        `${customerName}\n${customerEmail}\n\n` +
+                        `Amount: $55 AUD\n` +
+                        `For: ${session.instrument} lesson on ${fmtDate(session.date)}\n\n` +
+                        `Continue?`
+                      );
+                      
+                      if (!confirmed) return;
+                      
+                      try {
+                        const response = await fetch('/.netlify/functions/create-invoice', {
+                          method: 'POST',
+                          headers: { 'Content-Type': 'application/json' },
+                          body: JSON.stringify({
+                            customerEmail,
+                            customerName,
+                            amount: 5500, // $55 in cents
+                            description: `Music Lesson - ${session.instrument} with ${tutor?.name} on ${fmtDate(session.date)} at ${fmtTime(session.startTime)}`,
+                            sessionId: session.id
+                          })
+                        });
+                        
+                        const data = await response.json();
+                        
+                        if (data.success) {
+                          // Update session to invoice status
+                          onUpdateSession(session.id, { 
+                            payment_status: 'invoice',
+                            payment_code: session.payment_code || 'S'
+                          });
+                          
+                          alert(`✅ Invoice sent to ${customerEmail}\n\nCustomer will receive email with payment link.\nInvoice due in 7 days.`);
+                        } else {
+                          throw new Error(data.error || 'Failed to create invoice');
+                        }
+                      } catch (error) {
+                        console.error('Invoice error:', error);
+                        alert('❌ Failed to send invoice: ' + error.message);
+                      }
+                    }}
+                    style={{width: '100%'}}
+                  >
+                    📧 Send Stripe Invoice
+                  </button>
+                  <div style={{
+                    marginTop: '.5rem',
+                    fontSize: '.75rem',
+                    color: 'var(--text3)',
+                    textAlign: 'center'
+                  }}>
+                    Customer will receive email with payment link (7 days to pay)
+                  </div>
+                </div>
+              )}
+
               {/* Helper Text */}
               <div style={{
                 marginTop: '1rem',
