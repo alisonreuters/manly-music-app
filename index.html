@@ -661,7 +661,7 @@ function RecordingSection({ session, canRecord, userRole, onSaveRecording }) {
 /* ══════════════════════════════════════════════════
    PRACTICE FILES UPLOAD COMPONENT
 ══════════════════════════════════════════════════ */
-function PracticeFilesSection({ session, currentUser, userRole }) {
+function PracticeFilesSection({ session, currentUserId, userRole }) {
   const [files, setFiles] = useState([]);
   const [uploading, setUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
@@ -713,7 +713,7 @@ function PracticeFilesSection({ session, currentUser, userRole }) {
     
     try {
       // Upload to Supabase Storage
-      const filePath = `${currentUser.id}/session_${session.id}/${Date.now()}_${file.name}`;
+      const filePath = `${currentUserId}/session_${session.id}/${Date.now()}_${file.name}`;
       
       const { data: uploadData, error: uploadError } = await supabase.storage
         .from('student-files')
@@ -730,13 +730,13 @@ function PracticeFilesSection({ session, currentUser, userRole }) {
       const { error: dbError } = await supabase
         .from('student_files')
         .insert({
-          student_id: currentUser.id,
+          student_id: currentUserId,
           session_id: session.id,
           file_name: file.name,
           file_path: filePath,
           file_type: ext,
           file_size: file.size,
-          uploaded_by: currentUser.id
+          uploaded_by: currentUserId
         });
       
       if (dbError) throw dbError;
@@ -1823,7 +1823,7 @@ function SessionPanel({ session, userRole, currentUserId, onClose, onSaveRecordi
           {/* ── Practice Files Upload ── */}
           <PracticeFilesSection 
             session={session}
-            currentUser={user}
+            currentUserId={currentUserId}
             userRole={userRole}
           />
 
@@ -2383,8 +2383,11 @@ function ScheduleModal({ onClose, onSave, currentUserId, userRole, sessions }) {
     const now = new Date();
     const selectedDateTime = new Date(`${form.date}T${form.startTime}`);
     
-    if (selectedDateTime < now) {
-      alert('Cannot book sessions in the past. Please select a future date and time.');
+    // Allow booking if at least 5 minutes in the future
+    const fiveMinutesFromNow = new Date(now.getTime() + 5 * 60000);
+    
+    if (selectedDateTime < fiveMinutesFromNow) {
+      alert('Cannot book sessions in the past. Please select a time at least 5 minutes from now.');
       return;
     }
     
