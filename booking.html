@@ -694,35 +694,72 @@
             <div className="card">
               {step === 1 && (
                 <>
-                  <h2>Select Your Tutor</h2>
+                  <h2>Book Your Music Lesson</h2>
+                  
                   <div style={{
-                    background: 'var(--bg3)',
-                    border: '1px solid var(--accent)',
+                    background: 'linear-gradient(135deg, #e0f2fe 0%, #bae6fd 100%)',
+                    border: '1px solid #0ea5e9',
                     borderRadius: 'var(--radius)',
-                    padding: '1rem',
+                    padding: '1.25rem',
                     marginBottom: '1.5rem',
-                    fontSize: '0.9rem',
-                    color: 'var(--text2)',
-                    lineHeight: '1.6'
+                    fontSize: '0.95rem',
+                    color: '#0c4a6e',
+                    lineHeight: '1.7'
                   }}>
-                    💡 <strong>Note:</strong> While you can select a preferred tutor, final tutor assignment will be based on your chosen instrument, skill level, and tutor availability to ensure the best match for your learning journey.
+                    🎵 <strong>Professional Tutor Matching</strong><br/>
+                    Select your instrument below, and our experienced team will match you with the perfect tutor for your skill level and schedule. All our tutors are qualified professionals committed to your musical journey!
                   </div>
-                  <div className="tutor-grid">
-                    {tutors.map(tutor => (
-                      <div 
-                        key={tutor.id}
-                        className={`tutor-card ${selectedTutor?.id === tutor.id ? 'selected' : ''}`}
-                        onClick={() => {
-                          setSelectedTutor(tutor);
-                          setStep(2);
-                        }}
-                      >
-                        <div className="tutor-avatar">{tutor.initials}</div>
-                        <div className="tutor-name">{tutor.name}</div>
-                        <div className="tutor-instrument">{tutor.instruments}</div>
-                      </div>
-                    ))}
+
+                  <div style={{marginBottom: '1.5rem'}}>
+                    <label style={{
+                      display: 'block',
+                      marginBottom: '0.5rem',
+                      fontWeight: '600',
+                      color: 'var(--text)',
+                      fontSize: '1rem'
+                    }}>
+                      Choose Your Instrument *
+                    </label>
+                    <select
+                      value={selectedInstrument}
+                      onChange={(e) => setSelectedInstrument(e.target.value)}
+                      style={{
+                        width: '100%',
+                        padding: '0.75rem',
+                        fontSize: '1rem',
+                        border: '2px solid var(--border2)',
+                        borderRadius: 'var(--radius)',
+                        background: 'white',
+                        color: '#111'
+                      }}
+                    >
+                      <option value="">-- Select Instrument --</option>
+                      <option value="Piano">Piano</option>
+                      <option value="Guitar">Guitar</option>
+                      <option value="Drums">Drums</option>
+                      <option value="Voice">Voice</option>
+                      <option value="Violin">Violin</option>
+                      <option value="Bass">Bass</option>
+                      <option value="Ukulele">Ukulele</option>
+                    </select>
                   </div>
+
+                  <button 
+                    className="btn btn-primary btn-lg"
+                    onClick={() => {
+                      if (!selectedInstrument) {
+                        alert('Please select an instrument');
+                        return;
+                      }
+                      // Auto-select placeholder tutor (ID 1)
+                      // Admin will reassign to real tutor after booking
+                      setSelectedTutor({ id: 1, name: 'Music Tutor', instruments: 'All' });
+                      setStep(2);
+                    }}
+                    style={{width: '100%', fontSize: '1.1rem', padding: '1rem'}}
+                  >
+                    Continue to Date & Time →
+                  </button>
                 </>
               )}
 
@@ -736,10 +773,11 @@
                         setSelectedTutor(null);
                         setSelectedDate(null);
                         setSelectedTime(null);
+                        setSelectedInstrument('');
                         setStep(1);
                       }}
                     >
-                      ← Change Tutor
+                      ← Back
                     </button>
                   </div>
                   <div className="calendar-header">
@@ -934,7 +972,7 @@
                       className={`price-option ${selectedPackage === 'single' ? 'selected' : ''}`}
                       onClick={() => setSelectedPackage('single')}
                     >
-                      <div className="price-amount">$55</div>
+                      <div className="price-amount">$75</div>
                       <div className="price-label">Single Lesson</div>
                     </div>
                     <div 
@@ -947,7 +985,7 @@
                     </div>
                   </div>
                   <button className="btn" onClick={handlePayment}>
-                    Pay ${selectedPackage === 'single' ? '55' : '600'} with Stripe
+                    Pay ${selectedPackage === 'single' ? '75' : '600'} with Stripe
                   </button>
                 </>
               )}
@@ -956,8 +994,8 @@
             <div className="card">
               <h2>Booking Summary</h2>
               <div className="summary-item">
-                <span className="summary-label">Tutor</span>
-                <span className="summary-value">{selectedTutor?.name || '—'}</span>
+                <span className="summary-label">Instrument</span>
+                <span className="summary-value">{selectedInstrument || '—'}</span>
               </div>
               <div className="summary-item">
                 <span className="summary-label">Date</span>
@@ -982,7 +1020,7 @@
               <div className="summary-item">
                 <span className="summary-label">Total</span>
                 <span className="summary-value" style={{color: 'var(--green)', fontSize: '1.3rem'}}>
-                  ${selectedPackage === 'single' ? '55' : '600'}
+                  ${selectedPackage === 'single' ? '75' : '600'}
                 </span>
               </div>
             </div>
