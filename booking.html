@@ -464,6 +464,7 @@
       const [loading, setLoading] = useState(true);
       const [tutors, setTutors] = useState([]);
       const [selectedTutor, setSelectedTutor] = useState(null);
+      const [selectedInstrument, setSelectedInstrument] = useState('');
       const [selectedDate, setSelectedDate] = useState(null);
       const [selectedTime, setSelectedTime] = useState(null);
       const [selectedPackage, setSelectedPackage] = useState('single');
@@ -751,6 +752,8 @@
                         alert('Please select an instrument');
                         return;
                       }
+                      // Sync both instrument states
+                      setInstrument(selectedInstrument);
                       // Auto-select placeholder tutor (ID 1)
                       // Admin will reassign to real tutor after booking
                       setSelectedTutor({ id: 1, name: 'Music Tutor', instruments: 'All' });
